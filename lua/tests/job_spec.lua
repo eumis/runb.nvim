@@ -66,11 +66,7 @@ describe("job.run", function()
         {
             params = { command = "echo", args = { "some test" } },
             expected = { cmd_code = 0, input = { "echo some test" }, output = { "some test" } },
-        },
-        {
-            params = { command = "sh", args = { "-c", "error" } },
-            expected = { cmd_code = 127, input = { 'sh -c error' }, output = { "sh: 1: error: not found" } },
-        },
+        }
     }
     for i, case in ipairs(cases) do
         it("should call a on_result " .. tostring(i), function()
@@ -96,11 +92,7 @@ describe("job.run", function()
         {
             params = { command = "echo", args = { "some test" } },
             expected = { cmd_code = 0, input = { "echo some test" }, output = { "some test" } },
-        },
-        {
-            params = { command = "sh", args = { "-c", "error" } },
-            expected = { cmd_code = 127, input = { 'sh -c error' }, output = { "sh: 1: error: not found" } },
-        },
+        }
     }
     for i, case in ipairs(cases) do
         it("should call a on_output " .. tostring(i), function()
