@@ -1,6 +1,7 @@
 # runb.nvim
 
 Runs current buffer and shows output in split buffer.
+Rest client in lua for neovim.
 
 ## Installation
 
