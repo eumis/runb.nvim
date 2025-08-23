@@ -4,7 +4,7 @@ Runs current buffer and shows output in split buffer.
 
 ## Installation
 
-- neovim required >= 0.10
+- neovim 0.10.0+ required
 - install using your favorite plugin manager
 
 [lazy.nvim](https://github.com/folke/lazy.nvim)
