@@ -88,15 +88,11 @@ function M.curl(method, args, callback)
         local source_buf = vim.api.nvim_get_current_buf()
         view.render("Running...", { source_buf = source_buf })
         on_output = function(data)
-            vim.schedule(function()
-                view.render(data, { source_buf = source_buf, append = true })
-            end)
+            view.render(data, { source_buf = source_buf, append = true })
         end
         on_result = function(result)
-            vim.schedule(function()
-                view.render(result.input, { source_buf = source_buf, rendering = M.view_rendering })
-                view.render(result.output, { source_buf = source_buf, rendering = M.view_rendering, append = true })
-            end)
+            view.render(result.input, { source_buf = source_buf, rendering = M.view_rendering })
+            view.render(result.output, { source_buf = source_buf, rendering = M.view_rendering, append = true })
         end
     end
     return job.run({

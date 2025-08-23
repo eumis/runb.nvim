@@ -10,11 +10,6 @@ local view = require "runb.view"
 local job_run_stub = stub.new(job, "run")
 local view_render_stub = stub.new(view, "render")
 
-local schedule_stub = stub.new(vim, "schedule")
-schedule_stub.invokes(function(callback)
-    callback()
-end)
-
 describe("bash.run", function()
     local path = "path/to/bash/script"
     after_each(function()

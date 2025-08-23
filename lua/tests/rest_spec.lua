@@ -24,11 +24,6 @@ view_render_stub.invokes(function(result, opts)
     render_params.opts = opts
 end)
 
-local schedule_stub = stub.new(vim, "schedule")
-schedule_stub.invokes(function(callback)
-    callback()
-end)
-
 local function cleanup()
     job_run_stub:clear()
     job_params = nil
@@ -162,7 +157,7 @@ describe("rest.curl", function()
 
         assert.are.same(result, render_params.result)
         assert.are.same(current_buf, render_params.opts.source_buf)
-        assert.are.same(rest.view_rendering, render_params.opts.content)
+        assert.are.same(rest.view_rendering, render_params.opts.rendering)
     end)
 end)
 
