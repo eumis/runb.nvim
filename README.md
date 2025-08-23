@@ -171,14 +171,30 @@ echo $env_key
 
 ### Async script
 
+```python test.py
+# test.py
+import os
+
+print("html_url: ", os.getenv("html_url"))
+print("python output")
+```
+
+```bash test.sh
+#!/bin/bash
+
+# test.sh
+echo $python_output
+echo $1
+```
+
 ```lua script
+-- script.lua
 local runb = require "runb"
 local rest = require "runb.rest"
 local python = require "runb.python"
 local bash = require "runb.bash"
 local view = require "runb.view"
 local util = require "runb.util"
-
 
 local rendering = {
     tabs = { "bash", "python", "api" },
@@ -214,18 +230,4 @@ runb.async(function()
     result.bash = bash_result.output
     view.render(result, { tab = "bash", rendering = rendering })
 end)
-```
-
-```python test.py
-import os
-
-print("html_url: ", os.getenv("html_url"))
-print("python output")
-```
-
-```bash test.sh
-#!/bin/bash
-
-echo $python_output
-echo $1
 ```
