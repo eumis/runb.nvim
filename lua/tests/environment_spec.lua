@@ -3,12 +3,7 @@
 local assert = require "luassert"
 local environment = require "runb.environment"
 
-local function cleanup()
-end
-
 describe("environment.set", function()
-    after_each(cleanup)
-
     it("should set env", function()
         local env = { a = 1, b = "value" }
 
@@ -29,8 +24,6 @@ describe("environment.set", function()
 end)
 
 describe("environment.set_current", function()
-    after_each(cleanup)
-
     it("should set current env", function()
         local env = { a = 1, b = "value" }
         environment.set("test", env)
@@ -41,11 +34,25 @@ describe("environment.set_current", function()
         assert.are.same(env, environment.get())
         assert.are.same(env, actual)
     end)
+
+    it("should send event", function()
+        local env = { a = 1, b = "value" }
+        environment.set("test", env)
+        local actual_data = nil
+        vim.api.nvim_create_autocmd("User", {
+            pattern = "RunbEnvChanged",
+            callback = function(args)
+                actual_data = args.data
+            end
+        })
+
+        environment.set_current("test")
+
+        assert.are.same({ name = "test" }, actual_data)
+    end)
 end)
 
 describe("environment.get", function()
-    after_each(cleanup)
-
     it("should return env", function()
         local env = { a = 1, b = "value" }
         environment.set("test", env)
@@ -53,5 +60,16 @@ describe("environment.get", function()
         environment.set_current("test")
 
         assert.are.same(env, environment.get("test"))
+    end)
+end)
+
+describe("environment.add_system_env", function()
+    it("should add system env vars to env", function()
+        local env = {}
+        environment.add_system_vars(env)
+
+        for k, v in pairs(vim.uv.os_environ()) do
+            assert.are.same(v, env[k])
+        end
     end)
 end)

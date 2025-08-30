@@ -131,11 +131,10 @@ rest.patch {
 ```
 
 ```lua use arguments for every request
-rest.use_args({ "| jq -Rc" })
--- curl -X GET https://api.github.com/repos/eumis/runb.nvim -i | jq -Rc
+rest.use_args({ "-i" })
+-- curl -X GET https://api.github.com/repos/eumis/runb.nvim -i
 rest.get {
-    env.github_host .. "/repos/eumis/runb.nvim",
-    "-i"
+    env.github_host .. "/repos/eumis/runb.nvim"
 }
 ```
 

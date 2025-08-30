@@ -21,6 +21,10 @@ end
 ---@return table
 M.set_current = function(name)
     M.current = name
+    vim.api.nvim_exec_autocmds("User", {
+        pattern = "RunbEnvChanged",
+        data = { name = name },
+    })
     return M.get(name)
 end
 
@@ -31,6 +35,15 @@ M.get = function(name)
         name = M.current
     end
     return M.envs[name]
+end
+
+---@param env table
+---@return table
+M.add_system_vars = function(env)
+    for k, v in pairs(vim.uv.os_environ()) do
+        env[k] = v
+    end
+    return env
 end
 
 return M

@@ -1,7 +1,8 @@
 local generic = require "runb.generic"
 
 local M = {
-    command = "python"
+    command = "usql",
+    connection = ""
 }
 
 ---@param args string | string[]

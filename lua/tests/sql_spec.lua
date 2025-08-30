@@ -7,7 +7,7 @@ local generic = require "runb.generic"
 
 local generic_run_stub = stub.new(generic, "run")
 
-describe("bash.run", function()
+describe("sql.run", function()
     local path = "path/to/bash/script"
     after_each(function()
         generic_run_stub:clear()
