@@ -9,7 +9,7 @@ local M = {
 ---@return Job
 function M.run(args, callback)
     if type(args) == "string" then args = { args } end
-    return generic.run(M.command, { command_args = args }, callback)
+    return generic.run(M.command, { args = args }, callback)
 end
 
 return M

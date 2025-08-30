@@ -20,7 +20,7 @@ describe("python.run", function()
 
             python.run(path, callback)
 
-            assert.stub(generic_run_stub).was_called_with(python_path, { command_args = { path } }, callback)
+            assert.stub(generic_run_stub).was_called_with(python_path, { args = { path } }, callback)
         end)
     end
 end)

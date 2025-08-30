@@ -5,7 +5,7 @@ local environment = require "runb.environment"
 local M = {}
 
 ---@class GenericParams
----@field command_args? string[]
+---@field args? string[]
 
 ---@param command string
 ---@param params GenericParams
@@ -27,7 +27,7 @@ function M.run(command, params, callback)
     end
     return job.run({
         command = command,
-        args = params.command_args,
+        args = params.args,
         env = environment.get(),
         on_output = on_output,
         on_result = on_result

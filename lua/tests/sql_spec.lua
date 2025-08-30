@@ -20,7 +20,7 @@ describe("sql.run", function()
 
             bash.run(path, callback)
 
-            assert.stub(generic_run_stub).was_called_with(bash_path, { command_args = { path } }, callback)
+            assert.stub(generic_run_stub).was_called_with(bash_path, { args = { path } }, callback)
         end)
     end
 end)

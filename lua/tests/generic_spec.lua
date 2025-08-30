@@ -22,7 +22,7 @@ describe("generic.run", function()
             local callback = function(_) end
             environment.set("", { a = 1 }, true)
 
-            generic.run(cmd, { command_args = { path } }, callback)
+            generic.run(cmd, { args = { path } }, callback)
 
             assert.stub(job_run_stub).was_called_with({
                 command = cmd,
@@ -36,7 +36,7 @@ describe("generic.run", function()
         it("should render calling text " .. cmd, function()
             local current_buf = vim.api.nvim_get_current_buf()
 
-            generic.run(cmd, { command_args = { path } })
+            generic.run(cmd, { args = { path } })
 
             assert.stub(view_render_stub).was_called_with("Running...", { source_buf = current_buf })
         end)
@@ -44,7 +44,7 @@ describe("generic.run", function()
         it("should append data to view while in progress " .. cmd, function()
             local current_buf = vim.api.nvim_get_current_buf()
 
-            generic.run(cmd, { command_args = { path } })
+            generic.run(cmd, { args = { path } })
             job_run_stub.calls[1].vals[1].on_output("data")
 
             assert.stub(view_render_stub).was_called_with("data", { source_buf = current_buf, append = true })
@@ -53,7 +53,7 @@ describe("generic.run", function()
         it("should render result " .. cmd, function()
             local current_buf = vim.api.nvim_get_current_buf()
 
-            generic.run(cmd, { command_args = { path } })
+            generic.run(cmd, { args = { path } })
             job_run_stub.calls[1].vals[1].on_result({ input = "bash " .. path, output = "data" })
 
             assert.stub(view_render_stub).was_called_with("bash " .. path, { source_buf = current_buf })
