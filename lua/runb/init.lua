@@ -7,8 +7,10 @@ function M.run()
         dofile(vim.fn.expand("%"))
     elseif vim.bo.filetype == "sh" then
         require("runb.bash").run(vim.fn.expand("%:p"))
-    elseif vim.bo.filetype == 'python' then
+    elseif vim.bo.filetype == "python" then
         require("runb.python").run(vim.fn.expand("%:p"))
+    elseif vim.bo.filetype == "sql" then
+        require("runb.sql").run({"-f", vim.fn.expand("%:p")})
     end
 end
 
