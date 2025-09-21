@@ -6,180 +6,208 @@ local util = require "runb.util"
 ---@field tab? string
 ---@field start_line? integer
 
----@class ViewRendering
+---@class View
 ---@field tabs? string[]
+---@field start fun(result: Result?, view_buf: integer, opts: ViewRenderingOptions)
+---@field append fun(data: string | string[], result: Result?, view_buf: integer, opts: ViewRenderingOptions)
 ---@field render fun(result: Result, view_buf: integer, opts: ViewRenderingOptions)
 
----@class View
+---@class ViewState
 ---@field source_buf integer
 ---@field view_buf integer
 ---@field result any
 ---@field current_tab? string
----@field content? ViewRendering
+---@field view? View
 ---@field open_autocmd? integer
 ---@field close_autocmd? integer
 
 ---@class State
 ---@field win integer
----@field source_buf integer
----@field highlight_namespace integer
 ---@field current_tab_mark integer
----@field au_group integer
 
 ---@class RenderOptions
 ---@field source_buf? integer
 ---@field tab? string
----@field rendering? ViewRendering
+---@field view? View
 ---@field open_view? boolean
 ---@field scroll_to_end? boolean
 ---@field append? boolean
 
-local highlight_namespace = vim.api.nvim_create_namespace('auto_header')
-local highligh_groups = {
-    current_tab = { bg = "#264f78", fg = "#FFFFFF", bold = true }
-}
-for name, value in pairs(highligh_groups) do
-    vim.api.nvim_set_hl(highlight_namespace, name, value)
-end
-
-local au_group = vim.api.nvim_create_augroup('auto_group', { clear = false })
-
 local M = {
+    hl_namespace = "runb_output",
+    hl_groups = {
+        current_tab = { bg = "#264f78", fg = "#FFFFFF", bold = true }
+    },
     ---@type State
     state = {
         win = -1,
-        source_buf = -1,
-        highlight_namespace = highlight_namespace,
         current_tab_mark = -1,
-        au_group = au_group
     },
-    ---@type {[integer]: View}
+    ---@type {[integer]: ViewState}
     views = {},
-    ---@type ViewRendering
-    view_rendering = {
-        render = function(result, view_buf, opts)
-            local content = nil
-            if result == nil then
-                content = { "nil" }
-            elseif type(result) == "string" then
-                content = { result }
-            elseif type(result[1]) == "string" then
-                content = result
-            elseif result.output ~= nil then
-                content = result.output
-            end
-            vim.api.nvim_buf_set_lines(view_buf, opts.start_line, -1, false,
-                content or { "Error. Result should be string or string[]. Result: " .. print(vim.inspect(result)) })
-        end
-    }
+    ---@type {[integer]: integer}
+    sources = {}
 }
 
----@param  tabs string[]
----@return string
-local function get_header_line(tabs)
-    local start = 1
-    local header_line = '|'
-    for _, name in ipairs(tabs) do
-        start = start + #name + 3
-        header_line = header_line .. ' ' .. name .. ' |'
-    end
-    return header_line
+-- Highlighting
+
+local hl_id = vim.api.nvim_create_namespace(M.hl_namespace)
+for name, value in pairs(M.hl_groups) do
+    vim.api.nvim_set_hl(hl_id, name, value)
 end
 
----@param source_buf integer
----@return View
-local function ensure_view(source_buf)
-    local view = M.views[source_buf]
+---@param view_state ViewState
+local function higihlight_current_tab(view_state)
+    local start_col = 1
+    for _, t in ipairs(view_state.view.tabs) do
+        if t == view_state.current_tab then break end
+        start_col = start_col + #t + 3
+    end
+    local opts = {
+        end_row = 0,
+        end_col = start_col + #view_state.current_tab + 2,
+        hl_group = "current_tab",
+        hl_mode = "replace"
+    }
+    if M.state.current_tab_mark ~= -1 then
+        opts.id = M.state.current_tab_mark
+    end
+    M.state.current_tab_mark = vim.api.nvim_buf_set_extmark(view_state.view_buf, hl_id, 0, start_col, opts)
+end
+
+-- View
+
+---@type View?
+M.default = {
+    start = function(result, view_buf, opts)
+        local text = "Running..."
+        if result ~= nil then
+            if result.command ~= nil then
+                text = result.command
+            end
+            if result.args ~= nil then
+                text = text .. " " .. table.concat(result.args, " ")
+            end
+        end
+        vim.api.nvim_buf_set_lines(view_buf, opts.start_line, -1, false, { text })
+    end,
+
+    append = function(data, _, view_buf, opts)
+        if data == nil then return end
+        if type(data) == "string" then
+            data = { data }
+        end
+        vim.api.nvim_buf_set_lines(view_buf, opts.start_line, -1, false, data)
+    end,
+
+    render = function(result, view_buf, opts)
+        local content = nil
+        if result == nil then
+            content = { "nil" }
+        elseif type(result) == "string" then
+            content = { result }
+        elseif type(result[1]) == "string" then
+            content = result
+        elseif result.output ~= nil then
+            content = result.output
+        end
+        vim.api.nvim_buf_set_lines(view_buf, opts.start_line, -1, false, content or { "nil" })
+    end
+}
+
+---@return ViewState
+local function get_current_view()
+    local current_buf = vim.api.nvim_get_current_buf()
+    local view = M.views[current_buf]
     if view == nil then
-        view = {
-            source_buf = source_buf,
-            view_buf = -1,
-            result = nil,
-            current_tab = nil,
-            content = nil
-        }
-        M.views[source_buf] = view
+        view = M.views[M.sources[current_buf]]
     end
     return view
 end
 
----@param view View
----@return integer
-local function ensure_view_buf(view)
-    if not vim.api.nvim_buf_is_valid(view.view_buf) then
-        view.view_buf = vim.api.nvim_create_buf(false, true)
-        return view.view_buf
-    end
-    return view.view_buf
+local function buf_enter_callback(opts)
+    vim.schedule(function()
+        M.open_view(opts.buf)
+    end)
 end
 
----@param win integer
----@param buf integer
----@return integer
-local function ensure_win(win, buf)
-    if vim.api.nvim_win_is_valid(win) then
-        vim.api.nvim_win_set_buf(win, buf)
-    else
-        win = vim.api.nvim_open_win(buf, false, { split = "right" })
-        vim.api.nvim_win_set_hl_ns(win, M.state.highlight_namespace)
-    end
-    return win
+local function buf_leave_callback()
+    vim.schedule(function()
+        if get_current_view() == nil then
+            M.hide_view()
+        end
+    end)
 end
 
----@return integer?
-local function get_current_view_buf()
-    local current_view = M.views[M.state.source_buf]
-    if current_view ~= nil then
-        return current_view.view_buf
-    end
-    return nil
-end
-
+local au_group = vim.api.nvim_create_augroup('runb_group', { clear = false })
 ---@param source_buf integer
 local function auto_open_view(source_buf)
     local view = M.views[source_buf]
     if view.open_autocmd == nil then
         view.open_autocmd = vim.api.nvim_create_autocmd("BufEnter", {
-            group = M.state.au_group,
+            group = au_group,
             buffer = source_buf,
-            callback = function(opts)
-                vim.schedule(function()
-                    M.open_view(opts.buf)
-                end)
-            end
+            callback = buf_enter_callback
         })
         view.close_autocmd = vim.api.nvim_create_autocmd("BufLeave", {
-            group = M.state.au_group,
+            group = au_group,
             buffer = source_buf,
-            callback = function()
-                vim.schedule(function()
-                    local current_buf = vim.api.nvim_get_current_buf()
-                    if M.views[current_buf] == nil and get_current_view_buf() ~= current_buf then
-                        M.hide_view()
-                    end
-                end)
-            end
+            callback = buf_leave_callback
         })
     end
 end
 
 ---@param source_buf integer
-function M.open_view(source_buf)
-    M.state.source_buf = source_buf
-    local view = ensure_view(source_buf)
-    ensure_view_buf(view)
-    M.state.win = ensure_win(M.state.win, view.view_buf)
-    auto_open_view(source_buf)
+---@param view? View
+---@param override_view? boolean
+---@return ViewState
+local function ensure_view_state(source_buf, view, override_view)
+    local view_state = M.views[source_buf]
+    if view_state == nil then
+        view_state = {
+            source_buf = source_buf,
+            view_buf = -1,
+            result = nil,
+            current_tab = nil,
+            view = view or M.default
+        }
+        M.views[source_buf] = view_state
+        auto_open_view(source_buf)
+    end
+
+    if view ~= nil and (override_view or view_state.view == nil) then
+        view_state.view = view
+    end
+
+    if not vim.api.nvim_buf_is_valid(view_state.view_buf) then
+        if M.sources[view_state.view_buf] ~= nil then
+            M.sources[view_state.view_buf] = nil
+        end
+        view_state.view_buf = vim.api.nvim_create_buf(false, true)
+        M.sources[view_state.view_buf] = source_buf
+    end
+
+    return view_state
 end
 
-function M.hide_view()
+---@param source_buf integer
+M.open_view = function(source_buf)
+    local view = ensure_view_state(source_buf)
     if vim.api.nvim_win_is_valid(M.state.win) then
-        M.state.source_buf = nil
+        vim.api.nvim_win_set_buf(M.state.win, view.view_buf)
+    else
+        M.state.win = vim.api.nvim_open_win(view.view_buf, false, { split = "right" })
+        vim.api.nvim_win_set_hl_ns(M.state.win, hl_id)
+    end
+end
+
+M.hide_view = function()
+    if vim.api.nvim_win_is_valid(M.state.win) then
         vim.api.nvim_win_hide(M.state.win)
     end
 end
 
-function M.toggle_view()
+M.toggle_view = function()
     if vim.api.nvim_win_is_valid(M.state.win) then
         M.hide_view()
     else
@@ -187,115 +215,156 @@ function M.toggle_view()
     end
 end
 
----@param view View
----@param content? ViewRendering
----@return ViewRendering
-local function ensure_view_content(view, content)
-    view.content = content or view.content
-    if view.content == nil then
-        view.content = M.view_rendering
-    end
-    return view.content
-end
+-- Rendering
 
----@param tabs string[]
----@param tab string
----@param view_buf? integer
-local function higihlight_tab(tabs, tab, view_buf)
-    local start_col = 1
-    for _, t in ipairs(tabs) do
-        if t == tab then break end
-        start_col = start_col + #t + 3
-    end
-    local opts = {
-        end_row = 0,
-        end_col = start_col + #tab + 2,
-        hl_group = "current_tab",
-        hl_mode = "replace"
-    }
-    if view_buf == nil then
-        view_buf = M.views[M.state.source_buf].view_buf
-    end
-    if M.state.current_tab_mark ~= -1 then
-        opts.id = M.state.current_tab_mark
-    end
-    M.state.current_tab_mark = vim.api.nvim_buf_set_extmark(view_buf, M.state.highlight_namespace, 0, start_col, opts)
-end
-
----@param result Result
 ---@param opts? RenderOptions
-function M.render(result, opts)
+---@return RenderOptions
+local function ensure_opts(opts)
     opts = opts or {}
     opts.source_buf = opts.source_buf == nil and vim.api.nvim_get_current_buf() or opts.source_buf
-    if opts.open_view or opts.open_view == nil then
-        M.open_view(opts.source_buf)
-    end
-    local view = ensure_view(opts.source_buf)
-    ensure_view_content(view, opts.rendering)
-    view.result = result
+    return opts
+end
 
-    local start_line = -1
-    if opts.append == nil or opts.append == false then
-        start_line = 0
-        if view.content.tabs ~= nil and #view.content.tabs > 0 then
-            vim.api.nvim_buf_set_lines(view.view_buf, start_line, -1, false, { get_header_line(view.content.tabs) })
-            start_line = start_line + 1
-            view.current_tab = opts.tab or view.content.tabs[1]
-            higihlight_tab(view.content.tabs, view.current_tab, view.view_buf)
+---@param view_state ViewState
+---@param opts RenderOptions
+---@return integer
+local function render_tab_line(view_state, opts)
+    local start_line = 0
+    if view_state.view.tabs ~= nil and #view_state.view.tabs > 0 then
+        local pos = 1
+        local header_line = '|'
+        for _, name in ipairs(view_state.view.tabs) do
+            pos = pos + #name + 3
+            header_line = header_line .. ' ' .. name .. ' |'
         end
+        vim.api.nvim_buf_set_lines(view_state.view_buf, start_line, -1, false, { header_line })
+        start_line = start_line + 1
+        view_state.current_tab = opts.tab or view_state.view.tabs[1]
+        higihlight_current_tab(view_state)
     end
-    view.content.render(result, view.view_buf, { tab = opts.tab, start_line = start_line })
+    return start_line
+end
+
+---@param view_state ViewState
+---@param opts RenderOptions
+local function scroll_to_end(view_state, opts)
     if opts.scroll_to_end then
-        local count = vim.api.nvim_buf_line_count(view.view_buf)
+        local count = vim.api.nvim_buf_line_count(view_state.view_buf)
         vim.api.nvim_win_set_cursor(M.state.win, { count, 0 })
     end
 end
 
 ---@param view View
+---@param override_view? boolean
+---@param source_buf? integer
+M.use_view = function(view, override_view, source_buf)
+    if source_buf == nil then
+        source_buf = vim.api.nvim_get_current_buf()
+    end
+    ensure_view_state(source_buf, view, override_view)
+end
+
+---@param result? Result
+---@param opts? RenderOptions
+M.start = function(result, opts)
+    opts = ensure_opts(opts)
+    local view_state = ensure_view_state(opts.source_buf, opts.view)
+    view_state.result = result
+
+    if util.bool(opts.open_view) then
+        M.open_view(opts.source_buf)
+    end
+
+    if view_state.view ~= nil then
+        local start_line = render_tab_line(view_state, opts)
+        view_state.view.start(result, view_state.view_buf, { tab = opts.tab, start_line = start_line })
+        scroll_to_end(view_state, opts)
+    end
+end
+
+---@param data string
+---@param result Result?
+---@param opts? RenderOptions
+M.append = function(data, result, opts)
+    opts = ensure_opts(opts)
+    local view_state = ensure_view_state(opts.source_buf, opts.view)
+    view_state.result = result
+
+    if util.bool(opts.open_view) then
+        M.open_view(opts.source_buf)
+    end
+
+    if view_state.view ~= nil then
+        view_state.view.append(data, result, view_state.view_buf, { tab = opts.tab, start_line = -1 })
+        scroll_to_end(view_state, opts)
+    end
+end
+
+---@param result Result
+---@param opts? RenderOptions
+M.render = function(result, opts)
+    opts = ensure_opts(opts)
+    local view_state = ensure_view_state(opts.source_buf, opts.view)
+    view_state.result = result
+
+    if util.bool(opts.open_view) then
+        M.open_view(opts.source_buf)
+    end
+
+    if view_state.view ~= nil then
+        local start_line = render_tab_line(view_state, opts)
+        view_state.view.render(result, view_state.view_buf, { tab = opts.tab, start_line = start_line })
+        scroll_to_end(view_state, opts)
+    end
+end
+
+-- Tabs
+
+---@param view ViewState
 local function can_switch_tab(view)
     return view ~= nil
         and view.result ~= nil
-        and view.content ~= nil
-        and view.content.tabs ~= nil
-        and #view.content.tabs > 0
+        and view.view ~= nil
+        and view.view.tabs ~= nil
+        and #view.view.tabs > 0
         and vim.api.nvim_buf_is_valid(view.view_buf)
 end
 
 ---@param tab string | integer
-function M.select_tab(tab)
-    local view = M.views[M.state.source_buf]
+M.select_tab = function(tab)
+    local view = get_current_view()
     if not can_switch_tab(view) then
         return
     end
     if type(tab) == "number" then
-        tab = view.content.tabs[tab]
+        tab = view.view.tabs[tab]
     end
     ---@cast tab string
-    M.render(view.result, { tab = tab })
+    M.render(view.result, { source_buf = view.source_buf, tab = tab })
 end
 
-function M.next_tab()
-    local view = M.views[M.state.source_buf]
+M.next_tab = function()
+    local view = get_current_view()
     if not can_switch_tab(view) then
         return
     end
-    local tab_index = util.index(view.content.tabs, view.current_tab) + 1
-    if tab_index > #view.content.tabs then
+    local tab_index = util.index(view.view.tabs, view.current_tab) + 1
+    if tab_index > #view.view.tabs then
         tab_index = 1
     end
-    M.render(view.result, { tab = view.content.tabs[tab_index] })
+    M.render(view.result, { source_buf = view.source_buf, tab = view.view.tabs[tab_index] })
 end
 
-function M.previous_tab()
-    local view = M.views[M.state.source_buf]
+M.previous_tab = function()
+    local view = get_current_view()
     if not can_switch_tab(view) then
         return
     end
-    local tab_index = util.index(view.content.tabs, view.current_tab) - 1
+    local tab_index = util.index(view.view.tabs, view.current_tab) - 1
     if tab_index < 1 then
-        tab_index = #view.content.tabs
+        tab_index = #view.view.tabs
     end
-    M.render(view.result, { tab = view.content.tabs[tab_index] })
+    M.render(view.result, { source_buf = view.source_buf, tab = view.view.tabs[tab_index] })
 end
 
 return M

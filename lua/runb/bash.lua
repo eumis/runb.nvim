@@ -1,15 +1,31 @@
 local generic = require "runb.generic"
+local util = require "runb.util"
+
+---@class BashSettings
+---@field command string
+---@field args? string[]
 
 local M = {
-    command = "bash"
+    ---@type BashSettings
+    settings = {
+        command = "bash"
+    }
 }
 
+---@param settings BashSettings
+M.setup = function(settings)
+    M.settings = settings
+end
+
 ---@param args string | string[]
----@param callback? fun(result: any)
+---@param callback? fun(result: JobResult)
 ---@return Job
-function M.run(args, callback)
+M.run = function(args, callback)
     if type(args) == "string" then args = { args } end
-    return generic.run(M.command, { args = args }, callback)
+    if M.settings.args ~= nil then
+        util.append(args, M.settings.args)
+    end
+    return generic.run(M.settings.command, { args = args, on_result = callback })
 end
 
 return M

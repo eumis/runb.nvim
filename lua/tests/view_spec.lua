@@ -12,27 +12,26 @@ local function setup()
 end
 
 local function assert_view_win_opened(source_buf)
-    assert.are.same(M.module.state.source_buf, source_buf, "source buf")
     assert.is.True(vim.api.nvim_win_is_valid(M.module.state.win), "win is valid")
     assert.are.same(M.module.views[source_buf].view_buf, vim.api.nvim_win_get_buf(M.module.state.win), "win buf")
-    assert.are.same(M.module.state.highlight_namespace, vim.api.nvim_get_hl_ns({ winid = M.module.state.win }),
-        "highlight namespace")
+    local ns_id = vim.api.nvim_get_hl_id_by_name(M.module.hl_namespace)
+    assert.are.same(vim.api.nvim_get_hl_ns({ winid = M.module.state.win }), ns_id, "highlight namespace")
+    local view_buf = M.module.views[source_buf].view_buf
+    assert.are.same(M.module.sources[view_buf], source_buf)
 end
 
 local function assert_view_win_hidden()
     assert.is.False(vim.api.nvim_win_is_valid(M.module.state.win))
-    assert.is.Nil(M.module.state.source_buf)
 end
 
----@param buf integer
+---@param view ViewState
 ---@param tab string
 ---@param start_col integer
 ---@param end_col integer
-local function assert_current_tab(buf, tab, start_col, end_col)
-    local view = M.module.views[M.module.state.source_buf]
+local function assert_current_tab(view, tab, start_col, end_col)
     assert.are.same(tab, view.current_tab, "current tab")
-    local current_mark = vim.api.nvim_buf_get_extmark_by_id(buf, M.module.state.highlight_namespace,
-        M.module.state.current_tab_mark, { details = true })
+    local ns_id = vim.api.nvim_get_hl_id_by_name(M.module.hl_namespace)
+    local current_mark = vim.api.nvim_buf_get_extmark_by_id(view.view_buf, ns_id, M.module.state.current_tab_mark, { details = true })
     assert.are.same(0, current_mark[1], "start row")
     assert.are.same(start_col, current_mark[2], "start col")
     assert.are.same(0, current_mark[3].end_row, "end row")
@@ -50,6 +49,7 @@ local function assert_content(source_buf, content, first_line, last_line)
     end
     local actual_content = vim.api.nvim_buf_get_lines(M.module.views[source_buf].view_buf, first_line,
         last_line, false)
+
     assert.are.same(content, actual_content)
 end
 
@@ -57,19 +57,11 @@ end
 ---@param content Result
 ---@return fun(result: Result, view_buf: integer, opts: ViewRenderingOptions)
 local function get_render_if_tab(tab, content)
-    return function(_, view_buf, opts) if tab == opts.tab then M.module.view_rendering.render(content, view_buf, opts) end end
+    return function(_, view_buf, opts) if tab == opts.tab then M.module.default.render(content, view_buf, opts) end end
 end
 
 describe("view.open_view", function()
     before_each(setup)
-
-    it("should set current source buffer", function()
-        local source_buf = vim.api.nvim_get_current_buf()
-
-        M.module.open_view(source_buf)
-
-        assert.are.same(source_buf, M.module.state.source_buf)
-    end)
 
     it("should create view", function()
         local source_buf = vim.api.nvim_get_current_buf()
@@ -83,8 +75,10 @@ describe("view.open_view", function()
         local source_buf = vim.api.nvim_get_current_buf()
 
         M.module.open_view(source_buf)
+        local actual = M.module.views[source_buf].view_buf
 
-        assert.is.True(vim.api.nvim_buf_is_valid(M.module.views[source_buf].view_buf))
+        assert.is.True(vim.api.nvim_buf_is_valid(actual))
+        assert.are.same(M.module.sources[actual], source_buf)
     end)
 
     it("should create view win", function()
@@ -228,16 +222,16 @@ describe("view.render", function()
 
             M.module.render(result, { open_view = open_view })
 
-            assert.is.Not.Nil(M.module.views[source_buf].content)
+            assert.is.Not.Nil(M.module.views[source_buf].view)
         end)
 
         it("should use passed view content", function()
             local source_buf = vim.api.nvim_get_current_buf()
             local view_content = { render = function() end }
 
-            M.module.render(result, { open_view = open_view, rendering = view_content })
+            M.module.render(result, { open_view = open_view, view = view_content })
 
-            assert.are.same(view_content, M.module.views[source_buf].content)
+            assert.are.same(view_content, M.module.views[source_buf].view)
         end)
     end
 
@@ -251,9 +245,9 @@ describe("view.render", function()
             local rendering = { tabs = case.tabs, render = function() end }
             local source_buf = vim.api.nvim_get_current_buf()
 
-            M.module.render(result, { rendering = rendering })
+            M.module.render(result, { view = rendering })
 
-            assert_current_tab(M.module.views[source_buf].view_buf, "one", 1, #case.tabs[1] + 3)
+            assert_current_tab(M.module.views[source_buf], "one", 1, #case.tabs[1] + 3)
             assert_content(source_buf, { case.header_line }, 0, 1)
         end)
     end
@@ -270,25 +264,26 @@ describe("view.render", function()
             local rendering = { tabs = case.tabs, render = get_render_if_tab(case.tab, case.content) }
             local source_buf = vim.api.nvim_get_current_buf()
 
-            M.module.render(result, { rendering = rendering, tab = case.tab })
+            M.module.render(result, { view = rendering, tab = case.tab })
 
             if case.tabs ~= nil and #case.tabs > 0 then
-                assert_current_tab(M.module.views[source_buf].view_buf, case.tab, case.hl[1], case.hl[2])
+                assert_current_tab(M.module.views[source_buf], case.tab, case.hl[1], case.hl[2])
             end
             assert_content(source_buf, case.content, case.content_first_line)
         end)
     end
 
     cases = {
-        { content = { "one" },        append_content = { "two" },   full_content = { "one", "two" } },
-        { content = { "one", "two" }, append_content = { "three" }, full_content = { "one", "two", "three" } },
+        { content = { "one" },        append_content = { "two" },   full_content = { "Running...", "one", "two" } },
+        { content = { "one", "two" }, append_content = { "three" }, full_content = { "Running...", "one", "two", "three" } },
     }
     for i, case in pairs(cases) do
         it("should append content " .. tostring(i), function()
             local source_buf = vim.api.nvim_get_current_buf()
 
-            M.module.render(case.content)
-            M.module.render(case.append_content, { append = true })
+            M.module.start({})
+            M.module.append(case.content, {})
+            M.module.append(case.append_content, {})
 
             assert_content(source_buf, case.full_content, 0)
         end)
@@ -328,12 +323,12 @@ describe("view.select_tab", function()
             ---@cast tab_str string
             local rendering = { tabs = case.tabs, render = get_render_if_tab(tab_str, case.content) }
             local source_buf = vim.api.nvim_get_current_buf()
-            M.module.render(result, { rendering = rendering })
+            M.module.render(result, { view = rendering })
 
             M.module.select_tab(case.tab)
 
             ---@cast tab_str string
-            assert_current_tab(M.module.views[source_buf].view_buf, tab_str, case.hl[1], case.hl[2])
+            assert_current_tab(M.module.views[source_buf], tab_str, case.hl[1], case.hl[2])
             assert_content(source_buf, case.content, case.content_first_line)
         end)
     end
@@ -352,11 +347,11 @@ describe("view.next_tab", function()
         it("should render next tab content " .. tostring(i), function()
             local rendering = { tabs = case.tabs, render = get_render_if_tab(case.next_tab, case.content) }
             local source_buf = vim.api.nvim_get_current_buf()
-            M.module.render(result, { rendering = rendering, tab = case.tab })
+            M.module.render(result, { view = rendering, tab = case.tab })
 
             M.module.next_tab()
 
-            assert_current_tab(M.module.views[source_buf].view_buf, case.next_tab, case.hl[1], case.hl[2])
+            assert_current_tab(M.module.views[source_buf], case.next_tab, case.hl[1], case.hl[2])
             assert_content(source_buf, case.content, case.content_first_line)
         end)
     end
@@ -375,12 +370,12 @@ describe("view.next_tab", function()
         it("should render next tab content " .. tostring(i), function()
             local rendering = { tabs = case.tabs, render = get_render_if_tab(case.next_tab, case.content) }
             local source_buf = vim.api.nvim_get_current_buf()
-            M.module.render(result, { rendering = rendering, tab = case.tab })
+            M.module.render(result, { view = rendering, tab = case.tab })
 
             M.module.previous_tab()
 
 
-            assert_current_tab(M.module.views[source_buf].view_buf, case.next_tab, case.hl[1], case.hl[2])
+            assert_current_tab(M.module.views[source_buf], case.next_tab, case.hl[1], case.hl[2])
             assert_content(source_buf, case.content, case.content_first_line)
         end)
     end

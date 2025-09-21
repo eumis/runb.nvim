@@ -1,14 +1,21 @@
 local util = require "runb.util"
-local view = require "runb.view"
-local job = require "runb.job"
+local generic = require "runb.generic"
+
+---@class RestSettings
+---@field command string
+---@field args? string[]
 
 local M = {
-    type = "rest"
+    ---@type RestSettings
+    settings = {
+        command = "curl"
+    }
 }
 
-local settings = {
-    args = nil
-}
+---@param settings SqlSettings
+M.setup = function(settings)
+    M.settings = settings
+end
 
 ---@param values table
 ---@return string[]
@@ -67,11 +74,6 @@ function M.query(values)
     return result
 end
 
----@param args? table
-function M.use_args(args)
-    settings.args = args
-end
-
 ---@param method string
 ---@param args table
 ---@param callback? fun(result: any)
@@ -79,28 +81,10 @@ end
 function M.curl(method, args, callback)
     local curl_args = { "-X", method }
     util.append(curl_args, util.flatten(args))
-    if settings.args ~= nil then
-        util.append(curl_args, settings.args)
+    if M.settings.args ~= nil then
+        util.append(curl_args, M.settings.args)
     end
-    local on_output = nil
-    local on_result = callback
-    if callback == nil then
-        local source_buf = vim.api.nvim_get_current_buf()
-        view.render("Running...", { source_buf = source_buf })
-        on_output = function(data)
-            view.render(data, { source_buf = source_buf, append = true })
-        end
-        on_result = function(result)
-            view.render(result.input, { source_buf = source_buf, rendering = M.view_rendering })
-            view.render(result.output, { source_buf = source_buf, rendering = M.view_rendering, append = true })
-        end
-    end
-    return job.run({
-        command = "curl",
-        args = curl_args,
-        on_output = on_output,
-        on_result = on_result
-    })
+    return generic.run(M.settings.command, { args = curl_args, on_result = callback })
 end
 
 ---@param args table
@@ -132,12 +116,5 @@ end
 function M.patch(args, callback)
     M.curl('PATCH', args, callback)
 end
-
----@type ViewRendering
-M.view_rendering = {
-    render = function(result, view_buf, opts)
-        view.view_rendering.render(result, view_buf, opts)
-    end
-}
 
 return M

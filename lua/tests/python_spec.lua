@@ -11,16 +11,31 @@ describe("python.run", function()
     local path = "path/to/python/script"
     after_each(function()
         generic_run_stub:clear()
+        python.setup({ command = "default" })
     end)
 
     for _, python_path in ipairs { "python", "python3.12", "/usr/bin/python" } do
         it("should run job " .. python_path, function()
             local callback = function(_) end
-            python.command = python_path
+            python.settings.command = python_path
 
             python.run(path, callback)
 
-            assert.stub(generic_run_stub).was_called_with(python_path, { args = { path } }, callback)
+            assert.stub(generic_run_stub).was_called_with(python_path, { args = { path }, on_result = callback })
+        end)
+
+        it("should run job with args " .. python_path, function()
+            local callback = function(_) end
+            local args = { "-param", "value" }
+            python.setup({
+                command = python_path,
+                args = args
+            })
+
+            python.run(path, callback)
+
+            assert.stub(generic_run_stub).was_called_with(python_path,
+                { args = { path, "-param", "value" }, on_result = callback })
         end)
     end
 end)

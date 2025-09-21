@@ -1,16 +1,26 @@
 local async = require "plenary.async"
 
-local M = {}
+local M = {
+    runs = {
+        lua = function()
+            dofile(vim.fn.expand("%"))
+        end,
+        sh = function()
+            require("runb.bash").run(vim.fn.expand("%:p"))
+        end,
+        python = function()
+            require("runb.python").run(vim.fn.expand("%:p"))
+        end,
+        sql = function()
+            require("runb.sql").run({ "-f", vim.fn.expand("%:p") })
+        end
+    }
+}
 
 function M.run()
-    if vim.bo.filetype == "lua" then
-        dofile(vim.fn.expand("%"))
-    elseif vim.bo.filetype == "sh" then
-        require("runb.bash").run(vim.fn.expand("%:p"))
-    elseif vim.bo.filetype == "python" then
-        require("runb.python").run(vim.fn.expand("%:p"))
-    elseif vim.bo.filetype == "sql" then
-        require("runb.sql").run({"-f", vim.fn.expand("%:p")})
+    local run_fn = M.runs[vim.bo.filetype]
+    if run_fn ~= nil then
+        run_fn()
     end
 end
 

@@ -1,23 +1,31 @@
 local generic = require "runb.generic"
+local util = require "runb.util"
+
+---@class SqlSettings
+---@field command string
+---@field args? string[]
 
 local M = {
-    command = "usql",
-    connection = nil
+    ---@type SqlSettings
+    settings = {
+        command = "usql"
+    }
 }
+
+---@param settings SqlSettings
+M.setup = function(settings)
+    M.settings = settings
+end
 
 ---@param args string | string[]
 ---@param callback? fun(result: any)
 ---@return Job
 function M.run(args, callback)
-    if type(args) == "string" then
-        args = { args }
-    elseif args == nil then
-        args = {}
+    if type(args) == "string" then args = { args } end
+    if M.settings.args ~= nil then
+        util.append(args, M.settings.args)
     end
-    if M.connection ~= nil then
-        table.insert(args, 1, M.connection)
-    end
-    return generic.run(M.command, { args = args }, callback)
+    return generic.run(M.settings.command, { args = args, on_result = callback })
 end
 
 return M

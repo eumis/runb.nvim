@@ -63,13 +63,13 @@ describe("environment.get", function()
     end)
 end)
 
-describe("environment.add_system_env", function()
-    it("should add system env vars to env", function()
-        local env = {}
-        environment.add_system_vars(env)
+describe("environment.get_job_env", function()
+    it("should return env", function()
+        local env = { a = 1, b = "value" }
+        environment.set("test", env)
 
-        for k, v in pairs(vim.uv.os_environ()) do
-            assert.are.same(v, env[k])
-        end
+        environment.set_current("test")
+
+        assert.are.same(env, environment.get_job_env("test"))
     end)
 end)

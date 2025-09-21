@@ -2,7 +2,9 @@ local M = {
     ---@type table<string, table>
     envs = {},
     ---@type string?
-    current = nil
+    current = nil,
+    ---@type fun(env: table):table
+    job_env_transform = nil
 }
 
 ---@param name string
@@ -37,13 +39,7 @@ M.get = function(name)
     return M.envs[name]
 end
 
----@param env table
----@return table
-M.add_system_vars = function(env)
-    for k, v in pairs(vim.uv.os_environ()) do
-        env[k] = v
-    end
-    return env
-end
+---@type fun(name?:string):table
+M.get_job_env = M.get
 
 return M

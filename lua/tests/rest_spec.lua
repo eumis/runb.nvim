@@ -4,35 +4,13 @@ local assert = require "luassert"
 local util = require "runb.util"
 local stub = require "luassert.stub"
 local rest = require "runb.rest"
+local generic = require "runb.generic"
 
-local job = require "runb.job"
-local job_run_stub = stub.new(job, "run")
----@type JobParams?
-local job_params = nil
-job_run_stub.invokes(function(params)
-    job_params = params
-end)
-
-local view = require "runb.view"
-local view_render_stub = stub.new(view, "render")
-local render_params = {
-    result = nil,
-    opts = nil
-}
-view_render_stub.invokes(function(result, opts)
-    render_params.result = result
-    render_params.opts = opts
-end)
+local generic_run_stub = stub.new(generic, "run")
 
 local function cleanup()
-    job_run_stub:clear()
-    job_params = nil
-    view_render_stub:clear()
-    render_params = {
-        result = nil,
-        opts = nil
-    }
-    rest.use_args(nil)
+    rest.settings.args = nil
+    generic_run_stub:clear()
 end
 
 ---@param expected string[]
@@ -110,55 +88,20 @@ describe("rest.curl", function()
         {
             method = "POST",
             args = { { "-H", "b:value" }, { "-H", "Content-Type:application/json", "-d", '{"a":1}' } },
-            use_args = { "-i", "| jq -R -c" },
-            expected = { "-X", "POST", "-H", "b:value", "-H", "Content-Type:application/json", "-d", '{"a":1}', "-i", "| jq -R -c" }
+            use_args = { "-i" },
+            expected = { "-X", "POST", "-H", "b:value", "-H", "Content-Type:application/json", "-d", '{"a":1}', "-i" }
         },
     }
     for i, case in ipairs(cases) do
         it("should run curl job " .. i, function()
             local callback = function(_) end
-            rest.use_args(case.use_args)
+            rest.settings.args = case.use_args
 
             rest.curl(case.method, case.args, callback)
 
-            assert.are.same("curl", job_params.command)
-            assert.are.same(case.expected, job_params.args)
-            assert.is.Nil(job_params.on_data)
-            assert.are.same(callback, job_params.on_result)
+            assert.stub(generic_run_stub).was_called_with("curl", { args = case.expected, on_result = callback })
         end)
     end
-
-    it("should render calling text", function()
-        local current_buf = vim.api.nvim_get_current_buf()
-
-        rest.curl("GET", {}, nil)
-
-        assert.are.same("Running...", render_params.result)
-        assert.are.same(current_buf, render_params.opts.source_buf)
-    end)
-
-    it("should append data to view while in progress", function()
-        local current_buf = vim.api.nvim_get_current_buf()
-
-        rest.curl("GET", {}, nil)
-        job_params.on_output("data")
-
-        assert.are.same("data", render_params.result)
-        assert.are.same(current_buf, render_params.opts.source_buf)
-        assert.is.True(render_params.opts.append)
-    end)
-
-    it("should render result", function()
-        local current_buf = vim.api.nvim_get_current_buf()
-        local output = { "result", "data" }
-
-        rest.curl("GET", {}, nil)
-        job_params.on_result(output)
-
-        assert.are.same(result, render_params.result)
-        assert.are.same(current_buf, render_params.opts.source_buf)
-        assert.are.same(rest.view_rendering, render_params.opts.rendering)
-    end)
 end)
 
 local args = { a = 1, b = "value" }
@@ -167,9 +110,7 @@ local callback = function() end
 local function assert_method(method)
     local method_args = { "-X", method }
     util.append(method_args, args)
-    assert.are.same("curl", job_params.command)
-    assert.are.same(method_args, job_params.args)
-    assert.are.same(callback, job_params.on_result)
+    assert.stub(generic_run_stub).was_called_with("curl", { args = method_args, on_result = callback })
 end
 
 describe("rest.get", function()
