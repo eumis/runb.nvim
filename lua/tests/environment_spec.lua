@@ -23,12 +23,12 @@ describe("environment.set", function()
     end)
 end)
 
-describe("environment.set_current", function()
+describe("environment.use", function()
     it("should set current env", function()
         local env = { a = 1, b = "value" }
         environment.set("test", env)
 
-        local actual = environment.set_current("test")
+        local actual = environment.use("test")
 
         assert.are.same("test", environment.current)
         assert.are.same(env, environment.get())
@@ -46,7 +46,7 @@ describe("environment.set_current", function()
             end
         })
 
-        environment.set_current("test")
+        environment.use("test")
 
         assert.are.same({ name = "test" }, actual_data)
     end)
@@ -57,7 +57,7 @@ describe("environment.get", function()
         local env = { a = 1, b = "value" }
         environment.set("test", env)
 
-        environment.set_current("test")
+        environment.use("test")
 
         assert.are.same(env, environment.get("test"))
     end)
@@ -68,7 +68,7 @@ describe("environment.get_job_env", function()
         local env = { a = 1, b = "value" }
         environment.set("test", env)
 
-        environment.set_current("test")
+        environment.use("test")
 
         assert.are.same(env, environment.get_job_env("test"))
     end)

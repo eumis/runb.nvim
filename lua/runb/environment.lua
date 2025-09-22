@@ -14,14 +14,14 @@ local M = {
 M.set = function(name, env, set_current)
     M.envs[name] = env
     if set_current == true then
-        M.set_current(name)
+        M.use(name)
     end
     return env
 end
 
 ---@param name string
 ---@return table
-M.set_current = function(name)
+M.use = function(name)
     M.current = name
     vim.api.nvim_exec_autocmds("User", {
         pattern = "RunbEnvChanged",

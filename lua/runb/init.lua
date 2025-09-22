@@ -49,7 +49,7 @@ end, { nargs = 0 })
 vim.api.nvim_create_user_command("RunbEnv", function(opts)
     local env_name = opts.fargs[1]
     if env_name ~= nil then
-        require("runb.environment").set_current(env_name)
+        require("runb.environment").use(env_name)
     end
 end, { nargs = 1 })
 
