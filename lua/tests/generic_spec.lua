@@ -38,7 +38,7 @@ describe("generic.run", function()
         schedule_stub:clear()
     end)
 
-    for _, cmd in ipairs { "bash", "python", "usql" } do
+    for _, cmd in pairs { "bash", "python", "usql" } do
         it("should run job " .. cmd, function()
             environment.set("", { a = 1 }, true)
 

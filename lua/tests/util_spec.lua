@@ -20,7 +20,7 @@ describe("util.append", function()
             expected = { 1, 2, 3, 4 },
         },
     }
-    for i, case in ipairs(cases) do
+    for i, case in pairs(cases) do
         it("should append items to list " .. tostring(i), function()
             util.append(case.list, case.items)
 
@@ -40,7 +40,7 @@ describe("util.flatten", function()
             expected = { 1, 2, 3, 4 },
         },
     }
-    for i, case in ipairs(cases) do
+    for i, case in pairs(cases) do
         it("should append items to list " .. tostring(i), function()
             local actual = util.flatten(case.list)
 
@@ -73,7 +73,7 @@ describe("util.util.index", function()
         },
 
     }
-    for i, case in ipairs(cases) do
+    for i, case in pairs(cases) do
         it("should return item index " .. tostring(i), function()
             local actual = util.index(case.list, case.value)
 
@@ -106,7 +106,7 @@ describe("util.take", function()
         { n = 4, expected = { 1, 2, 3, 4 } },
         { n = 5, expected = { 1, 2, 3, 4 } },
     }
-    for i, case in ipairs(cases) do
+    for i, case in pairs(cases) do
         it("should return first n items " .. i, function()
             local actual = util.take(input, case.n)
 
@@ -123,7 +123,7 @@ describe("util.skip", function()
         { n = 3, expected = { 4 } },
         { n = 4, expected = {} },
     }
-    for i, case in ipairs(cases) do
+    for i, case in pairs(cases) do
         it("should return list with skipped n items " .. i, function()
             local actual = util.skip(input, case.n)
 
@@ -138,7 +138,7 @@ describe("util.split", function()
         { s = "a,b, c",          delimeter = ",",  expected = { "a", "b", " c" } },
         { s = "one--two--three", delimeter = "--", expected = { "one", "two", "three" } },
     }
-    for i, case in ipairs(cases) do
+    for i, case in pairs(cases) do
         it("should return list of split items " .. i, function()
             local actual = util.split(case.s, case.delimeter)
 
@@ -157,7 +157,7 @@ describe("util.bool", function()
         { value = nil,   default = true,  expected = true },
         { value = nil,   default = nil,   expected = true },
     }
-    for i, case in ipairs(cases) do
+    for i, case in pairs(cases) do
         it("should return value or default " .. i, function()
             local actual = util.bool(case.value, case.default)
 

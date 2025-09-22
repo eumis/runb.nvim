@@ -92,7 +92,7 @@ describe("rest.curl", function()
             expected = { "-X", "POST", "-H", "b:value", "-H", "Content-Type:application/json", "-d", '{"a":1}', "-i" }
         },
     }
-    for i, case in ipairs(cases) do
+    for i, case in pairs(cases) do
         it("should run curl job " .. i, function()
             local callback = function(_) end
             rest.settings.args = case.use_args

@@ -282,7 +282,7 @@ M.start = function(result, opts)
     end
 end
 
----@param data string
+---@param data string | string[]
 ---@param result Result?
 ---@param opts? RenderOptions
 M.append = function(data, result, opts)

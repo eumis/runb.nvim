@@ -14,7 +14,7 @@ describe("sql.run", function()
         sql.setup({ command = "default" })
     end)
 
-    for _, sql_path in ipairs { "usql", "/usr/bin/usql" } do
+    for _, sql_path in pairs { "usql", "/usr/bin/usql" } do
         it("should run job " .. sql_path, function()
             local callback = function(_) end
             sql.settings.command = sql_path

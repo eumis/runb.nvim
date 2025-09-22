@@ -14,7 +14,7 @@ describe("bash.run", function()
         bash.setup({ command = "bash" })
     end)
 
-    for _, bash_path in ipairs { "bash", "/usr/bin/bash" } do
+    for _, bash_path in pairs { "bash", "/usr/bin/bash" } do
         it("should run job " .. bash_path, function()
             local callback = function(_) end
             bash.settings.command = bash_path

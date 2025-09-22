@@ -14,7 +14,7 @@ describe("python.run", function()
         python.setup({ command = "default" })
     end)
 
-    for _, python_path in ipairs { "python", "python3.12", "/usr/bin/python" } do
+    for _, python_path in pairs { "python", "python3.12", "/usr/bin/python" } do
         it("should run job " .. python_path, function()
             local callback = function(_) end
             python.settings.command = python_path
