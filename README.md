@@ -168,6 +168,21 @@ environment.set("test", {
 echo $env_key
 ```
 
-### Async script
+### Async/await
 
-[demo/script.lua](demo/script.lua)
+```lua
+local runb = requie "runb"
+
+runb.async(function()
+    local result = {}
+
+    local rest_result = runb.await(require "runb.rest".get, {
+        "https://api.github.com/repos/eumis/runb.nvim",
+        "-s"
+    })
+end)
+```
+
+### Demo
+
+[Demo](demo/README.md)
