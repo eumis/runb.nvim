@@ -7,13 +7,12 @@ Try to run every file with `:Runb` command.
 To change environemnt to "wdconfig" run `:RunbEnv wdconfig` command
 
 - script to setup environments. should be run before running demo files
-    [config.lua](demo/config.lua)
+    [config.lua](config.lua)
 - python script to run
-    [test.py](demo/test.py)
+    [test.py](test.py)
 - bash script to run
-    [bash.py](demo/bash.py)
+    [test.sh](test.sh)
 - lua script to call rest api
-    [test.lua](demo/test.lua)
+    [test.lua](test.lua)
 - async script to chain runs
-    [script.lua](demo/script.lua)
-
+    [script.lua](script.lua)
