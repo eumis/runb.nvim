@@ -131,11 +131,10 @@ rest.patch {
 ```
 
 ```lua use arguments for every request
-rest.use_args({ "| jq -Rc" })
--- curl -X GET https://api.github.com/repos/eumis/runb.nvim -i | jq -Rc
+rest.use_args({ "-i" })
+-- curl -X GET https://api.github.com/repos/eumis/runb.nvim -i
 rest.get {
-    env.github_host .. "/repos/eumis/runb.nvim",
-    "-i"
+    env.github_host .. "/repos/eumis/runb.nvim"
 }
 ```
 
@@ -169,65 +168,21 @@ environment.set("test", {
 echo $env_key
 ```
 
-### Async script
+### Async/await
 
-```python test.py
-# test.py
-import os
-
-print("html_url: ", os.getenv("html_url"))
-print("python output")
-```
-
-```bash test.sh
-#!/bin/bash
-
-# test.sh
-echo $python_output
-echo $1
-```
-
-```lua script
--- script.lua
-local runb = require "runb"
-local rest = require "runb.rest"
-local python = require "runb.python"
-local bash = require "runb.bash"
-local view = require "runb.view"
-local util = require "runb.util"
-
-local rendering = {
-    tabs = { "bash", "python", "api" },
-    render = function(result, view_buf, opts)
-        vim.bo[view_buf].filetype = "json"
-        local content = result[opts.tab]
-        view.view_rendering.render(content, view_buf, opts)
-    end
-}
-
-local env = require("runb.environment").set("async_test", {
-    input = "https://api.github.com"
-}, true)
+```lua
+local runb = requie "runb"
 
 runb.async(function()
     local result = {}
 
-    local rest_result = runb.await(rest.get, {
-        env.input .. "/repos/eumis/runb.nvim",
+    local rest_result = runb.await(require "runb.rest".get, {
+        "https://api.github.com/repos/eumis/runb.nvim",
         "-s"
     })
-    local info = util.decode(rest_result.output)
-    env.html_url = info.html_url
-    result.api = rest_result.output
-    view.render(result, { tab = "api", rendering = rendering })
-
-    local py_result = runb.await(python.run, vim.fn.expand("test.py"))
-    result.python = py_result.output
-    env.python_output = py_result.output[2]
-    view.render(result, { tab = "python", rendering = rendering })
-
-    local bash_result = runb.await(bash.run, { vim.fn.expand("test.sh"), "arg" })
-    result.bash = bash_result.output
-    view.render(result, { tab = "bash", rendering = rendering })
 end)
 ```
+
+### Demo
+
+[Demo](demo/README.md)

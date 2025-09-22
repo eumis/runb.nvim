@@ -8,16 +8,6 @@ M.append = function(list, values)
     end
 end
 
----@param one any[]
----@param two any[]
----@return any[]
-M.join = function(one, two)
-    local result = {}
-    M.append(result, one)
-    M.append(result, two)
-    return result
-end
-
 ---@param list any[]
 ---@return any[]
 M.flatten = function(list)
@@ -89,19 +79,14 @@ M.split = function(s, delimiter)
     return result
 end
 
----@param s string
----@param prefix string
-function M.starts_with(s, prefix)
-    return string.sub(s, 1, string.len(prefix)) == prefix
-end
-
----@param json string | string[]
----@return table
-function M.decode(json)
-    if type(json) == "table" then
-        json = table.concat(json, "\n")
+---@param value? boolean
+---@param default? boolean
+---@return boolean
+M.bool = function(value, default)
+    if value == nil then
+        return default == nil or default
     end
-    return vim.json.decode(json)
+    return value
 end
 
 return M

@@ -2,7 +2,9 @@ local M = {
     ---@type table<string, table>
     envs = {},
     ---@type string?
-    current = nil
+    current = nil,
+    ---@type fun(env: table):table
+    job_env_transform = nil
 }
 
 ---@param name string
@@ -12,15 +14,19 @@ local M = {
 M.set = function(name, env, set_current)
     M.envs[name] = env
     if set_current == true then
-        M.set_current(name)
+        M.use(name)
     end
     return env
 end
 
 ---@param name string
 ---@return table
-M.set_current = function(name)
+M.use = function(name)
     M.current = name
+    vim.api.nvim_exec_autocmds("User", {
+        pattern = "RunbEnvChanged",
+        data = { name = name },
+    })
     return M.get(name)
 end
 
@@ -32,5 +38,8 @@ M.get = function(name)
     end
     return M.envs[name]
 end
+
+---@type fun(name?:string):table
+M.get_job_env = M.get
 
 return M

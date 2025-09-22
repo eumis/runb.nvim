@@ -1,26 +1,26 @@
 local generic = require "runb.generic"
 local util = require "runb.util"
 
----@class PythonSettings
+---@class SqlSettings
 ---@field command string
 ---@field args? string[]
 
 local M = {
-    ---@type PythonSettings
+    ---@type SqlSettings
     settings = {
-        command = "python"
+        command = "usql"
     }
 }
 
----@param settings PythonSettings
+---@param settings SqlSettings
 M.setup = function(settings)
     M.settings = settings
 end
 
 ---@param args string | string[]
----@param callback? fun(result: JobResult)
+---@param callback? fun(result: any)
 ---@return Job
-M.run = function(args, callback)
+function M.run(args, callback)
     if type(args) == "string" then args = { args } end
     if M.settings.args ~= nil then
         util.append(args, M.settings.args)

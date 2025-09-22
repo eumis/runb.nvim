@@ -3,12 +3,7 @@
 local assert = require "luassert"
 local environment = require "runb.environment"
 
-local function cleanup()
-end
-
 describe("environment.set", function()
-    after_each(cleanup)
-
     it("should set env", function()
         local env = { a = 1, b = "value" }
 
@@ -28,30 +23,53 @@ describe("environment.set", function()
     end)
 end)
 
-describe("environment.set_current", function()
-    after_each(cleanup)
-
+describe("environment.use", function()
     it("should set current env", function()
         local env = { a = 1, b = "value" }
         environment.set("test", env)
 
-        local actual = environment.set_current("test")
+        local actual = environment.use("test")
 
         assert.are.same("test", environment.current)
         assert.are.same(env, environment.get())
         assert.are.same(env, actual)
     end)
+
+    it("should send event", function()
+        local env = { a = 1, b = "value" }
+        environment.set("test", env)
+        local actual_data = nil
+        vim.api.nvim_create_autocmd("User", {
+            pattern = "RunbEnvChanged",
+            callback = function(args)
+                actual_data = args.data
+            end
+        })
+
+        environment.use("test")
+
+        assert.are.same({ name = "test" }, actual_data)
+    end)
 end)
 
 describe("environment.get", function()
-    after_each(cleanup)
-
     it("should return env", function()
         local env = { a = 1, b = "value" }
         environment.set("test", env)
 
-        environment.set_current("test")
+        environment.use("test")
 
         assert.are.same(env, environment.get("test"))
+    end)
+end)
+
+describe("environment.get_job_env", function()
+    it("should return env", function()
+        local env = { a = 1, b = "value" }
+        environment.set("test", env)
+
+        environment.use("test")
+
+        assert.are.same(env, environment.get_job_env("test"))
     end)
 end)

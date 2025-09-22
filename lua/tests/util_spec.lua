@@ -1,5 +1,3 @@
----@diagnostic disable: need-check-nil
-
 local assert = require "luassert"
 
 local util = require "runb.util"
@@ -22,38 +20,11 @@ describe("util.append", function()
             expected = { 1, 2, 3, 4 },
         },
     }
-    for i, case in ipairs(cases) do
+    for i, case in pairs(cases) do
         it("should append items to list " .. tostring(i), function()
             util.append(case.list, case.items)
 
             assert.are.same(case.expected, case.list)
-        end)
-    end
-end)
-
-describe("util.join", function()
-    local cases = {
-        {
-            one = { 1 },
-            two = {},
-            expected = { 1 },
-        },
-        {
-            one = {},
-            two = { 2 },
-            expected = { 2 },
-        },
-        {
-            one = { 1, 2 },
-            two = { 3, 4 },
-            expected = { 1, 2, 3, 4 },
-        },
-    }
-    for i, case in ipairs(cases) do
-        it("should join two lists " .. tostring(i), function()
-            local actual = util.join(case.one, case.two)
-
-            assert.are.same(case.expected, actual)
         end)
     end
 end)
@@ -69,7 +40,7 @@ describe("util.flatten", function()
             expected = { 1, 2, 3, 4 },
         },
     }
-    for i, case in ipairs(cases) do
+    for i, case in pairs(cases) do
         it("should append items to list " .. tostring(i), function()
             local actual = util.flatten(case.list)
 
@@ -102,7 +73,7 @@ describe("util.util.index", function()
         },
 
     }
-    for i, case in ipairs(cases) do
+    for i, case in pairs(cases) do
         it("should return item index " .. tostring(i), function()
             local actual = util.index(case.list, case.value)
 
@@ -135,7 +106,7 @@ describe("util.take", function()
         { n = 4, expected = { 1, 2, 3, 4 } },
         { n = 5, expected = { 1, 2, 3, 4 } },
     }
-    for i, case in ipairs(cases) do
+    for i, case in pairs(cases) do
         it("should return first n items " .. i, function()
             local actual = util.take(input, case.n)
 
@@ -152,7 +123,7 @@ describe("util.skip", function()
         { n = 3, expected = { 4 } },
         { n = 4, expected = {} },
     }
-    for i, case in ipairs(cases) do
+    for i, case in pairs(cases) do
         it("should return list with skipped n items " .. i, function()
             local actual = util.skip(input, case.n)
 
@@ -167,7 +138,7 @@ describe("util.split", function()
         { s = "a,b, c",          delimeter = ",",  expected = { "a", "b", " c" } },
         { s = "one--two--three", delimeter = "--", expected = { "one", "two", "three" } },
     }
-    for i, case in ipairs(cases) do
+    for i, case in pairs(cases) do
         it("should return list of split items " .. i, function()
             local actual = util.split(case.s, case.delimeter)
 
@@ -176,42 +147,19 @@ describe("util.split", function()
     end
 end)
 
-describe("starts_with", function()
+describe("util.bool", function()
     local cases = {
-        { s = "one",          prefix = "o",     expected = true },
-        { s = "one",          prefix = "one",   expected = true },
-        { s = "one",          prefix = "One",   expected = false },
-        { s = "one",          prefix = "oN",    expected = false },
-        { s = "ONe",          prefix = "ON",    expected = true },
-        { s = "> some start", prefix = "> som", expected = true },
-        { s = "> some start", prefix = "< som", expected = false },
-        { s = "> some start", prefix = "<som",  expected = false },
+        { value = true,  default = false, expected = true },
+        { value = true,  default = true,  expected = true },
+        { value = false, default = false, expected = false },
+        { value = false, default = true,  expected = false },
+        { value = nil,   default = false, expected = false },
+        { value = nil,   default = true,  expected = true },
+        { value = nil,   default = nil,   expected = true },
     }
-    for i, case in ipairs(cases) do
-        it("should return true if string starts with prefix " .. i, function()
-            local actual = util.starts_with(case.s, case.prefix)
-
-            assert.are.same(case.expected, actual)
-        end)
-    end
-end)
-
-describe("util.decode", function()
-    local cases = {
-        { json = '{ "a": 1, "b": 2 }', expected = { a = 1, b = 2 } },
-        {
-            json = {
-                '{',
-                '  "a": 1,',
-                '  "b": 2',
-                '}',
-            },
-            expected = { a = 1, b = 2 }
-        },
-    }
-    for i, case in ipairs(cases) do
-        it("should decode json " .. i, function()
-            local actual = util.decode(case.json)
+    for i, case in pairs(cases) do
+        it("should return value or default " .. i, function()
+            local actual = util.bool(case.value, case.default)
 
             assert.are.same(case.expected, actual)
         end)

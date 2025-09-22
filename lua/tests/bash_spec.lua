@@ -3,59 +3,39 @@
 local assert = require "luassert"
 local stub = require "luassert.stub"
 local bash = require "runb.bash"
-local job = require "runb.job"
-local environment = require "runb.environment"
-local view = require "runb.view"
+local generic = require "runb.generic"
 
-local job_run_stub = stub.new(job, "run")
-local view_render_stub = stub.new(view, "render")
+local generic_run_stub = stub.new(generic, "run")
 
 describe("bash.run", function()
     local path = "path/to/bash/script"
     after_each(function()
-        job_run_stub:clear()
-        view_render_stub:clear()
+        generic_run_stub:clear()
+        bash.setup({ command = "bash" })
     end)
 
-    it("should run job", function()
-        local callback = function(_) end
-        environment.set("", { a = 1 }, true)
+    for _, bash_path in pairs { "bash", "/usr/bin/bash" } do
+        it("should run job " .. bash_path, function()
+            local callback = function(_) end
+            bash.settings.command = bash_path
 
-        bash.run(path, callback)
+            bash.run(path, callback)
 
-        assert.stub(job_run_stub).was_called_with({
-            command = "bash",
-            args = { path },
-            env = environment.get(),
-            on_output = nil,
-            on_result = callback
-        })
-    end)
+            assert.stub(generic_run_stub).was_called_with(bash_path, { args = { path }, on_result = callback })
+        end)
 
-    it("should render calling text", function()
-        local current_buf = vim.api.nvim_get_current_buf()
+        it("should run job with args " .. bash_path, function()
+            local callback = function(_) end
+            local args = { "--init-file", "/path/to/init/file.sh" }
+            bash.setup({
+                command = bash_path,
+                args = args
+            })
 
-        bash.run(path)
+            bash.run(path, callback)
 
-        assert.stub(view_render_stub).was_called_with("Running...", { source_buf = current_buf })
-    end)
-
-    it("should append data to view while in progress", function()
-        local current_buf = vim.api.nvim_get_current_buf()
-
-        bash.run(path)
-        job_run_stub.calls[1].vals[1].on_output("data")
-
-        assert.stub(view_render_stub).was_called_with("data", { source_buf = current_buf, append = true })
-    end)
-
-    it("should render result", function()
-        local current_buf = vim.api.nvim_get_current_buf()
-
-        bash.run(path)
-        job_run_stub.calls[1].vals[1].on_result({ input = "bash " .. path, output = "data" })
-
-        assert.stub(view_render_stub).was_called_with("bash " .. path, { source_buf = current_buf })
-        assert.stub(view_render_stub).was_called_with("data", { source_buf = current_buf, append = true })
-    end)
+            assert.stub(generic_run_stub).was_called_with(bash_path,
+                { args = { path, "--init-file", "/path/to/init/file.sh" }, on_result = callback })
+        end)
+    end
 end)

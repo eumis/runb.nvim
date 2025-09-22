@@ -10,7 +10,7 @@ local dofile_stub = stub.new(_G, "dofile")
 local bash_run_stub = stub.new(bash, "run")
 local python_run_stub = stub.new(python, "run")
 
-describe("job.run", function()
+describe("runb.run", function()
     it("should run lua file", function()
         vim.bo.filetype = "lua"
 
@@ -36,7 +36,7 @@ describe("job.run", function()
     end)
 end)
 
-describe("job.await", function()
+describe("runb.await", function()
     local fun = function(arg, callback)
         callback(arg)
     end

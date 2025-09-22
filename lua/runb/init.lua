@@ -1,14 +1,26 @@
 local async = require "plenary.async"
 
-local M = {}
+local M = {
+    runs = {
+        lua = function()
+            dofile(vim.fn.expand("%"))
+        end,
+        sh = function()
+            require("runb.bash").run(vim.fn.expand("%:p"))
+        end,
+        python = function()
+            require("runb.python").run(vim.fn.expand("%:p"))
+        end,
+        sql = function()
+            require("runb.sql").run({ "-f", vim.fn.expand("%:p") })
+        end
+    }
+}
 
 function M.run()
-    if vim.bo.filetype == "lua" then
-        dofile(vim.fn.expand("%"))
-    elseif vim.bo.filetype == "sh" then
-        require("runb.bash").run(vim.fn.expand("%:p"))
-    elseif vim.bo.filetype == 'python' then
-        require("runb.python").run(vim.fn.expand("%:p"))
+    local run_fn = M.runs[vim.bo.filetype]
+    if run_fn ~= nil then
+        run_fn()
     end
 end
 
@@ -37,7 +49,7 @@ end, { nargs = 0 })
 vim.api.nvim_create_user_command("RunbEnv", function(opts)
     local env_name = opts.fargs[1]
     if env_name ~= nil then
-        require("runb.environment").set_current(env_name)
+        require("runb.environment").use(env_name)
     end
 end, { nargs = 1 })
 
