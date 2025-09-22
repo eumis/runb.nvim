@@ -9,11 +9,11 @@ local M = {
 
 ---@param name string
 ---@param env table
----@param set_current? boolean
+---@param use? boolean
 ---@return table
-M.set = function(name, env, set_current)
+M.set = function(name, env, use)
     M.envs[name] = env
-    if set_current == true then
+    if use == true then
         M.use(name)
     end
     return env

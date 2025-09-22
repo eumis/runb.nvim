@@ -57,8 +57,8 @@ environment.set("test", {
 --get environment
 local env = environment.get("test")
 
---set current environment
-environment.set_current("test")
+--use current environment
+environment.use("test")
 
 --get current environment
 env = environment.get()
