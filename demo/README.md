@@ -16,4 +16,3 @@ To change environemnt to "wdconfig" run `:RunbEnv wdconfig` command
     [test.lua](test.lua)
 - async script to chain runs
     [script.lua](script.lua)
-
