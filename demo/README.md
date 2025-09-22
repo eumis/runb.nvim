@@ -11,7 +11,7 @@ To change environemnt to "wdconfig" run `:RunbEnv wdconfig` command
 - python script to run
     [test.py](test.py)
 - bash script to run
-    [bash.py](bash.py)
+    [bash.py](test.sh)
 - lua script to call rest api
     [test.lua](test.lua)
 - async script to chain runs
