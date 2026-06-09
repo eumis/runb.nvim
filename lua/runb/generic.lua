@@ -1,5 +1,5 @@
 local Job = require "plenary.job"
-local view = require "runb.view"
+local niew = require "runb.niew"
 local environment = require "runb.environment"
 
 ---@class JobResult
@@ -35,7 +35,14 @@ function M.run(command, params)
     local source_buf = vim.api.nvim_get_current_buf()
 
     if render then
-        view.start(result, { source_buf = source_buf })
+        local view = niew.open_view(source_buf)
+        local content = { command }
+        if result.args ~= nil then
+            table.insert(content, table.concat(result.args, " "))
+        end
+        table.insert(content, "")
+        table.insert(content, "Running...")
+        view:render(content)
     end
     if params.on_start ~= nil then
         params.on_start(result)
@@ -46,7 +53,7 @@ function M.run(command, params)
         table.insert(result.output, data)
         vim.schedule(function()
             if render then
-                view.append(data, result, { source_buf = source_buf, scroll_to_end = true })
+                niew.get_view(source_buf, true):render({ data, "", "Running..." }, { start_line = -2 })
             end
             if params.on_output ~= nil then
                 params.on_output(data, result)
@@ -60,7 +67,7 @@ function M.run(command, params)
         result.cmd_code = exit_code
         vim.schedule(function()
             if render then
-                view.render(result, { source_buf = source_buf })
+                niew.get_view(source_buf, true):render(result.output)
             end
             if params.on_result ~= nil then
                 params.on_result(result)
