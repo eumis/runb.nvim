@@ -17,15 +17,14 @@ M.setup = function(settings)
     M.settings = settings
 end
 
----@param args string | string[]
----@param callback? fun(result: any)
+---@param params? JobParams
 ---@return Job
-function M.run(args, callback)
-    if type(args) == "string" then args = { args } end
+function M.run(params)
+    params = generic.get_run_params(params)
     if M.settings.args ~= nil then
-        util.append(args, M.settings.args)
+        util.append(params.args, M.settings.args)
     end
-    return generic.run(M.settings.command, { args = args, on_result = callback })
+    return generic.run(M.settings.command, params)
 end
 
 return M

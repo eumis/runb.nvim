@@ -74,47 +74,57 @@ function M.query(values)
     return result
 end
 
+---@param params? JobParams
+---@return Job
+function M.curl(params)
+    params = generic.get_run_params(params)
+    params.args = util.flatten(params.args)
+    if M.settings.args ~= nil then
+        util.append(params.args, M.settings.args)
+    end
+    return generic.run(M.settings.command, params)
+end
+
 ---@param method string
 ---@param args table
----@param callback? fun(result: any)
----@return Job
-function M.curl(method, args, callback)
-    local curl_args = { "-X", method }
-    util.append(curl_args, util.flatten(args))
-    if M.settings.args ~= nil then
-        util.append(curl_args, M.settings.args)
-    end
-    return generic.run(M.settings.command, { args = curl_args, on_result = callback })
+---@param params? JobParams
+---@return JobParams
+local function get_curl_params(method, args, params)
+    params = generic.get_run_params(params)
+    util.append(args, { "-X", method })
+    util.append(args, params.args)
+    params.args = args
+    return params
 end
 
 ---@param args table
----@param callback? fun()
-function M.get(args, callback)
-    M.curl('GET', args, callback)
+---@param params? JobParams
+function M.get(args, params)
+    M.curl(get_curl_params("GET", args, params))
 end
 
 ---@param args table
----@param callback? fun(result: any)
-function M.post(args, callback)
-    M.curl('POST', args, callback)
+---@param params? JobParams
+function M.post(args, params)
+    M.curl(get_curl_params("POST", args, params))
 end
 
 ---@param args table
----@param callback? fun(result: any)
-function M.put(args, callback)
-    M.curl('PUT', args, callback)
+---@param params? JobParams
+function M.put(args, params)
+    M.curl(get_curl_params("PUT", args, params))
 end
 
 ---@param args table
----@param callback? fun(result: any)
-function M.delete(args, callback)
-    M.curl('DELETE', args, callback)
+---@param params? JobParams
+function M.delete(args, params)
+    M.curl(get_curl_params("DELETE", args, params))
 end
 
 ---@param args table
----@param callback? fun(result: any)
-function M.patch(args, callback)
-    M.curl('PATCH', args, callback)
+---@param params? JobParams
+function M.patch(args, params)
+    M.curl(get_curl_params("PATCH", args, params))
 end
 
 return M

@@ -1,34 +1,53 @@
+local nview = require "runb.niew"
 local async = require "plenary.async"
 
 local M = {
+    ---@type {[string]: fun(params: JobParams)}
     runs = {
-        lua = function()
+        lua = function(params)
+            params.args = {}
+            require("runb.generic").use_run_params(params)
             dofile(vim.fn.expand("%"))
         end,
-        sh = function()
-            require("runb.bash").run(vim.fn.expand("%:p"))
+        sh = function(params)
+            require("runb.bash").run(params)
         end,
-        python = function()
-            require("runb.python").run(vim.fn.expand("%:p"))
+        python = function(params)
+            require("runb.python").run(params)
         end,
-        sql = function()
-            require("runb.sql").run({ "-f", vim.fn.expand("%:p") })
+        sql = function(params)
+            table.insert(params.args, 1, "-f")
+            require("runb.sql").run(params)
         end
     }
 }
 
-function M.run()
+M.run = function()
     local run_fn = M.runs[vim.bo.filetype]
     if run_fn ~= nil then
-        run_fn()
+        local view = nview.open_view()
+        local params = {
+            args = { vim.fn.expand("%:p") },
+            on_start = function(result)
+                view:render_start(result)
+            end,
+            on_output = function(output, result)
+                view:render_progress(output, result)
+            end,
+            on_result = function(result)
+                view:render_start(result)
+                view:render_result(result, { start_line = -1 })
+            end
+        }
+        run_fn(params)
     end
 end
 
-function M.async(fun, callback)
+M.async = function(fun, callback)
     async.run(fun, callback)
 end
 
-function M.await(fun, ...)
+M.await = function(fun, ...)
     local argc = select("#", ...) + 1
     local wrapped = async.wrap(fun, argc)
     return wrapped(...)

@@ -1,3 +1,5 @@
+local util = require "runb.util"
+
 ---@class NiewRenderOptions
 ---@field start_line? integer
 
@@ -65,6 +67,39 @@ DefaultView.render = function(self, result, opts)
     vim.api.nvim_buf_set_lines(self.view_buf, start_line, -1, false, content)
 end
 
+---@param self Niew
+---@param result JobResult
+---@param opts? NiewRenderOptions
+DefaultView.render_start = function(self, result, opts)
+    local content = { result.command }
+    if result.args ~= nil then
+        content[1] = content[1] .. " " .. table.concat(result.args, " ")
+    end
+    table.insert(content, "")
+    table.insert(content, "Running...")
+    self:render(content, opts)
+end
+
+---@param self Niew
+---@param data string
+---@param result JobResult
+---@param opts? NiewRenderOptions
+DefaultView.render_progress = function(self, data, result, opts)
+    opts = opts or {
+        start_line = -2
+    }
+    self:render({ data, "", "Running..." }, opts)
+end
+
+---@param self Niew
+---@param result JobResult
+---@param opts? NiewRenderOptions
+DefaultView.render_result = function(self, result, opts)
+    opts = opts or {}
+    opts.start_line = 0
+    self:render(result.output, opts)
+end
+
 ---@param source_buf? integer
 ---@param create? boolean
 ---@return Niew
@@ -104,6 +139,25 @@ M.toggle_view = function()
     else
         M.open_view()
     end
+end
+
+---@param result JobResult
+---@return string[]
+M.get_cmd_output = function(result)
+    local content = { result.command }
+    if result.args ~= nil then
+        table.insert(content, table.concat(result.args, " "))
+    end
+    table.insert(content, "")
+    return content
+end
+
+---@param result JobResult
+---@return string[]
+M.get_full_output = function(result)
+    local content = M.get_cmd_output(result)
+    util.append(content, result.output)
+    return content
 end
 
 return M

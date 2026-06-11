@@ -1,5 +1,4 @@
 local Job = require "plenary.job"
-local niew = require "runb.niew"
 local environment = require "runb.environment"
 
 ---@class JobResult
@@ -22,8 +21,7 @@ local M = {}
 ---@param command string
 ---@param params JobParams
 ---@return Job
-function M.run(command, params)
-    local render = params.render == nil and true or params.render
+M.run = function(command, params)
     local args = params.args or {}
     ---@type JobResult
     local result = {
@@ -32,18 +30,6 @@ function M.run(command, params)
         args = args,
         output = {}
     }
-    local source_buf = vim.api.nvim_get_current_buf()
-
-    if render then
-        local view = niew.open_view(source_buf)
-        local content = { command }
-        if result.args ~= nil then
-            table.insert(content, table.concat(result.args, " "))
-        end
-        table.insert(content, "")
-        table.insert(content, "Running...")
-        view:render(content)
-    end
     if params.on_start ~= nil then
         params.on_start(result)
     end
@@ -52,9 +38,6 @@ function M.run(command, params)
     local on_stdout = function(_, data)
         table.insert(result.output, data)
         vim.schedule(function()
-            if render then
-                niew.get_view(source_buf, true):render({ data, "", "Running..." }, { start_line = -2 })
-            end
             if params.on_output ~= nil then
                 params.on_output(data, result)
             end
@@ -66,9 +49,6 @@ function M.run(command, params)
     local on_exit = function(_, exit_code)
         result.cmd_code = exit_code
         vim.schedule(function()
-            if render then
-                niew.get_view(source_buf, true):render(result.output)
-            end
             if params.on_result ~= nil then
                 params.on_result(result)
             end
@@ -87,6 +67,32 @@ function M.run(command, params)
     job:start()
 
     return job
+end
+
+local state = {
+    ---@type JobParams?
+    params = nil
+}
+
+---@return JobParams?
+state.pop_run_params = function()
+    local params = state.params
+    state.params = nil
+    return params
+end
+
+---@param params? JobParams
+M.use_run_params = function(params)
+    state.params = params
+end
+
+---@param params JobParams?
+---@return JobParams
+M.get_run_params = function(params)
+    local run_params = state.pop_run_params()
+    params = params or run_params or {}
+    params.args = params.args or {}
+    return params
 end
 
 return M
