@@ -1,6 +1,5 @@
 local Job = require "plenary.job"
 local environment = require "runb.environment"
-local util = require "runb.util"
 
 ---@class JobResult
 ---@field cmd_code number
@@ -82,19 +81,32 @@ end
 
 ---@return JobParams?
 M.pop_run_params = function()
-    print("popping")
     local params = state.params
     state.params = nil
     return params
 end
 
----@param params JobParams?
+---@param params? JobParams
+---@param callback? fun(result: JobResult)
 ---@return JobParams
-M.get_run_params = function(params)
-    print("get_run " .. vim.inspect(params))
-    print("get_run state " .. vim.inspect(state.params))
+M.get_run_params = function(params, callback)
+    if callback == nil and type(params) == "function" then
+        callback = params
+        params = nil
+    end
     params = params or state.params or {}
     params.args = params.args or {}
+    if callback ~= nil then
+        local merged_callback = callback
+        local on_result = params.on_result
+        if on_result ~= nil then
+            merged_callback = function(result)
+                on_result(result)
+                callback(result)
+            end
+        end
+        params.on_result = merged_callback
+    end
     return vim.deepcopy(params, true)
 end
 

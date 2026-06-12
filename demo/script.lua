@@ -1,5 +1,5 @@
 local runb = require "runb"
-local view = require "runb.view"
+local generic = require "runb.generic"
 
 local env = require("runb.environment").get()
 
@@ -14,7 +14,8 @@ local env = require("runb.environment").get()
 --     end
 -- }, true)
 
-runb.async(function()
+runb.async(function(params)
+    generic.use_run_params(params)
     local result = {}
 
     local rest_result = runb.await(require "runb.rest".get, {
@@ -25,14 +26,11 @@ runb.async(function()
     local info = vim.json.decode(info_json)
     env.html_url = info.html_url
     result.api = rest_result.output
-    view.render(result, { tab = "api" })
 
-    local py_result = runb.await(require "runb.python".run, vim.fn.expand("demo/test.py"))
+    local py_result = runb.await(require "runb.python".run, { args = { vim.fn.expand("demo/test.py") } })
     result.python = py_result.output
     env.python_output = py_result.output[2]
-    view.render(result, { tab = "python" })
 
-    local bash_result = runb.await(require "runb.bash".run, { vim.fn.expand("demo/test.sh"), "arg" })
+    local bash_result = runb.await(require "runb.bash".run, { args = { vim.fn.expand("demo/test.sh"), "arg" } })
     result.bash = bash_result.output
-    view.render(result, { tab = "bash" })
 end)

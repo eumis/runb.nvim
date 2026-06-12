@@ -18,9 +18,10 @@ M.setup = function(settings)
 end
 
 ---@param params? JobParams
+---@param callback? fun(result: JobResult)
 ---@return Job
-M.run = function(params)
-    params = generic.get_run_params(params)
+M.run = function(params, callback)
+    params = generic.get_run_params(params, callback)
     if M.settings.args ~= nil then
         util.append(params.args, M.settings.args)
     end

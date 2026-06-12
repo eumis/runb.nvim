@@ -74,10 +74,9 @@ function M.query(values)
     return result
 end
 
----@param params? JobParams
+---@param params JobParams
 ---@return Job
-function M.curl(params)
-    params = generic.get_run_params(params)
+local function run_curl(params)
     params.args = util.flatten(params.args)
     if M.settings.args ~= nil then
         util.append(params.args, M.settings.args)
@@ -88,46 +87,56 @@ end
 ---@param method string
 ---@param args table
 ---@param params? JobParams
+---@param callback? fun(result: JobResult)
 ---@return JobParams
-local function get_curl_params(method, args, params)
-    print("curl " .. vim.inspect(params))
-    params = generic.get_run_params(params)
+local function get_curl_params(method, args, params, callback)
+    params = generic.get_run_params(params, callback)
     util.append(args, { "-X", method })
     util.append(args, params.args)
     params.args = args
     return params
 end
 
----@param args table
 ---@param params? JobParams
-function M.get(args, params)
-    print("get " .. vim.inspect(params))
-    params = get_curl_params("GET", args, params)
-    M.curl(params)
+---@param callback? fun(result: JobResult)
+function M.curl(params, callback)
+    params = generic.get_run_params(params, callback)
+    run_curl(params)
 end
 
 ---@param args table
+---@param callback? fun(result: JobResult)
 ---@param params? JobParams
-function M.post(args, params)
-    M.curl(get_curl_params("POST", args, params))
+function M.get(args, params, callback)
+    run_curl(get_curl_params("GET", args, params, callback))
 end
 
 ---@param args table
+---@param callback? fun(result: JobResult)
 ---@param params? JobParams
-function M.put(args, params)
-    M.curl(get_curl_params("PUT", args, params))
+function M.post(args, params, callback)
+    run_curl(get_curl_params("POST", args, params, callback))
 end
 
 ---@param args table
+---@param callback? fun(result: JobResult)
 ---@param params? JobParams
-function M.delete(args, params)
-    M.curl(get_curl_params("DELETE", args, params))
+function M.put(args, params, callback)
+    run_curl(get_curl_params("PUT", args, params, callback))
 end
 
 ---@param args table
+---@param callback? fun(result: JobResult)
 ---@param params? JobParams
-function M.patch(args, params)
-    M.curl(get_curl_params("PATCH", args, params))
+function M.delete(args, params, callback)
+    run_curl(get_curl_params("DELETE", args, params, callback))
+end
+
+---@param args table
+---@param callback? fun(result: JobResult)
+---@param params? JobParams
+function M.patch(args, params, callback)
+    run_curl(get_curl_params("PATCH", args, params, callback))
 end
 
 return M

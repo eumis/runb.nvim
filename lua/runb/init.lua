@@ -37,7 +37,7 @@ M.run = function()
             end,
             on_result = function(result)
                 view:render_start(result)
-                view:render_result(result, { start_line = -1 })
+                view:render_result(result)
             end
         }
         run_fn(params)
@@ -45,8 +45,13 @@ M.run = function()
 end
 
 M.async = function(fun, callback)
-    local params = generic.pop_run_params()
-    async.run(fun, function() callback(params) end)
+    async.run(function()
+        local params = generic.pop_run_params()
+        fun(params)
+    end, function()
+        generic.pop_run_params()
+        if callback ~= nil then callback() end
+    end)
 end
 
 M.await = function(fun, ...)
