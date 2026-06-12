@@ -96,7 +96,7 @@ end
 ---@param opts? NiewRenderOptions
 DefaultView.render_result = function(self, result, opts)
     opts = opts or {}
-    opts.start_line = 0
+    opts.start_line = opts.start_line == nil and 0 or opts.start_line
     self:render(result.output, opts)
 end
 

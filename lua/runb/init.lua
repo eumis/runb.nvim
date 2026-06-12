@@ -25,15 +25,15 @@ M.run = function()
     if run_fn ~= nil then
         local view = nview.open_view()
         generic.use_params {
-            on_start = function(result)
-                view:render_start(result)
-            end,
-            on_output = function(output, result)
-                view:render_progress(output, result)
-            end,
+            -- on_start = function(result)
+            --     view:render_start(result, { start_line = -1 })
+            -- end,
+            -- on_output = function(output, result)
+            --     view:render_progress(output, result, { start_line = -1 })
+            -- end,
             on_result = function(result)
-                view:render_start(result)
-                view:render_result(result)
+                -- view:render_start(result)
+                view:render_result(result, { start_line = -1 })
             end
         }
         run_fn()

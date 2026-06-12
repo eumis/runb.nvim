@@ -102,7 +102,7 @@ M.resolve_params = function(params, callback)
         callback = params
         params = nil
     end
-    params = params or state.params or {}
+    params = vim.deepcopy(params or state.params or {}, true)
     if callback ~= nil then
         local merged_callback = callback
         local on_result = params.on_result

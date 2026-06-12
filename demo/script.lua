@@ -26,14 +26,14 @@ runb.async(function(params)
     local info = vim.json.decode(info_json)
     env.html_url = info.html_url
     result.api = rest_result.output
-    print("rest after")
+    print(rest_result.output)
 
     local py_result = runb.await(require "runb.python".run, vim.fn.expand("test.py"))
     result.python = py_result.output
     env.python_output = py_result.output[2]
-    print("python after")
+    print(py_result.output)
 
     local bash_result = runb.await(require "runb.bash".run, vim.fn.expand("test.sh"))
     result.bash = bash_result.output
-    print("bash after")
+    print(bash_result.output)
 end)
