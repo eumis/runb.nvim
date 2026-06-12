@@ -3,22 +3,19 @@ local nview = require "runb.niew"
 local generic = require "runb.generic"
 
 local M = {
-    ---@type {[string]: fun(params: JobParams)}
+    ---@type {[string]: fun()}
     runs = {
-        lua = function(params)
-            params.args = {}
-            generic.use_run_params(params)
+        lua = function()
             dofile(vim.fn.expand("%"))
         end,
-        sh = function(params)
-            require("runb.bash").run(params)
+        sh = function()
+            require("runb.bash").run(vim.fn.expand("%:p"))
         end,
-        python = function(params)
-            require("runb.python").run(params)
+        python = function()
+            require("runb.python").run(vim.fn.expand("%:p"))
         end,
-        sql = function(params)
-            table.insert(params.args, 1, "-f")
-            require("runb.sql").run(params)
+        sql = function()
+            require("runb.sql").run({ "-f", vim.fn.expand("%:p") })
         end
     }
 }
@@ -27,8 +24,7 @@ M.run = function()
     local run_fn = M.runs[vim.bo.filetype]
     if run_fn ~= nil then
         local view = nview.open_view()
-        local params = {
-            args = { vim.fn.expand("%:p") },
+        generic.use_params {
             on_start = function(result)
                 view:render_start(result)
             end,
@@ -40,16 +36,16 @@ M.run = function()
                 view:render_result(result)
             end
         }
-        run_fn(params)
+        run_fn()
     end
 end
 
 M.async = function(fun, callback)
     async.run(function()
-        local params = generic.pop_run_params()
+        local params = generic.pop_params()
         fun(params)
     end, function()
-        generic.pop_run_params()
+        generic.pop_params()
         if callback ~= nil then callback() end
     end)
 end

@@ -8,10 +8,8 @@ local environment = require "runb.environment"
 ---@field output string[]
 
 ---@class JobParams
----@field args? string[]
 ---@field cwd? string
 ---@field env? table
----@field render? boolean
 ---@field on_start? fun(result: JobResult)
 ---@field on_output? fun(output: string, result: JobResult)
 ---@field on_result? fun(result: JobResult)
@@ -19,10 +17,10 @@ local environment = require "runb.environment"
 local M = {}
 
 ---@param command string
+---@param args string[]
 ---@param params JobParams
 ---@return Job
-M.run = function(command, params)
-    local args = params.args or {}
+M.run = function(command, args, params)
     ---@type JobResult
     local result = {
         cmd_code = -1,
@@ -69,18 +67,28 @@ M.run = function(command, params)
     return job
 end
 
+---@param args? string | string[]
+---@return string[]
+M.resolve_args = function(args)
+    args = args or {}
+    if type(args) ~= "table" then
+        args = { args }
+    end
+    return args
+end
+
 local state = {
     ---@type JobParams?
     params = nil
 }
 
 ---@param params? JobParams
-M.use_run_params = function(params)
+M.use_params = function(params)
     state.params = params
 end
 
 ---@return JobParams?
-M.pop_run_params = function()
+M.pop_params = function()
     local params = state.params
     state.params = nil
     return params
@@ -89,13 +97,12 @@ end
 ---@param params? JobParams
 ---@param callback? fun(result: JobResult)
 ---@return JobParams
-M.get_run_params = function(params, callback)
+M.resolve_params = function(params, callback)
     if callback == nil and type(params) == "function" then
         callback = params
         params = nil
     end
     params = params or state.params or {}
-    params.args = params.args or {}
     if callback ~= nil then
         local merged_callback = callback
         local on_result = params.on_result

@@ -74,69 +74,81 @@ function M.query(values)
     return result
 end
 
+---@param args string[]
 ---@param params JobParams
 ---@return Job
-local function run_curl(params)
-    params.args = util.flatten(params.args)
+local function run_curl(args, params)
     if M.settings.args ~= nil then
-        util.append(params.args, M.settings.args)
+        util.append(args, M.settings.args)
     end
-    return generic.run(M.settings.command, params)
+    args = util.flatten(args)
+    if M.settings.args ~= nil then
+        util.append(args, M.settings.args)
+    end
+    return generic.run(M.settings.command, args, params)
 end
 
 ---@param method string
----@param args table
----@param params? JobParams
----@param callback? fun(result: JobResult)
+---@param args? string | string[]
 ---@return JobParams
-local function get_curl_params(method, args, params, callback)
-    params = generic.get_run_params(params, callback)
+local function get_method_args(method, args)
+    args = generic.resolve_args(args)
     util.append(args, { "-X", method })
-    util.append(args, params.args)
-    params.args = args
-    return params
+    return args
 end
 
+---@param args? string | string[]
 ---@param params? JobParams
 ---@param callback? fun(result: JobResult)
-function M.curl(params, callback)
-    params = generic.get_run_params(params, callback)
-    run_curl(params)
+function M.curl(args, params, callback)
+    args = generic.resolve_args(args)
+    params = generic.resolve_params(params, callback)
+    run_curl(args, params)
 end
 
----@param args table
+---@param args? string | string[]
 ---@param callback? fun(result: JobResult)
 ---@param params? JobParams
 function M.get(args, params, callback)
-    run_curl(get_curl_params("GET", args, params, callback))
+    args = get_method_args("GET", args)
+    params = generic.resolve_params(params, callback)
+    run_curl(args, params)
 end
 
----@param args table
+---@param args? string | string[]
 ---@param callback? fun(result: JobResult)
 ---@param params? JobParams
 function M.post(args, params, callback)
-    run_curl(get_curl_params("POST", args, params, callback))
+    args = get_method_args("POST", args)
+    params = generic.resolve_params(params, callback)
+    run_curl(args, params)
 end
 
----@param args table
+---@param args? string | string[]
 ---@param callback? fun(result: JobResult)
 ---@param params? JobParams
 function M.put(args, params, callback)
-    run_curl(get_curl_params("PUT", args, params, callback))
+    args = get_method_args("PUT", args)
+    params = generic.resolve_params(params, callback)
+    run_curl(args, params)
 end
 
----@param args table
+---@param args? string | string[]
 ---@param callback? fun(result: JobResult)
 ---@param params? JobParams
 function M.delete(args, params, callback)
-    run_curl(get_curl_params("DELETE", args, params, callback))
+    args = get_method_args("DELETE", args)
+    params = generic.resolve_params(params, callback)
+    run_curl(args, params)
 end
 
----@param args table
+---@param args? string | string[]
 ---@param callback? fun(result: JobResult)
 ---@param params? JobParams
 function M.patch(args, params, callback)
-    run_curl(get_curl_params("PATCH", args, params, callback))
+    args = get_method_args("PATCH", args)
+    params = generic.resolve_params(params, callback)
+    run_curl(args, params)
 end
 
 return M
