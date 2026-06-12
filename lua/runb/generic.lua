@@ -1,5 +1,6 @@
 local Job = require "plenary.job"
 local environment = require "runb.environment"
+local util = require "runb.util"
 
 ---@class JobResult
 ---@field cmd_code number
@@ -74,25 +75,27 @@ local state = {
     params = nil
 }
 
----@return JobParams?
-state.pop_run_params = function()
-    local params = state.params
-    state.params = nil
-    return params
-end
-
 ---@param params? JobParams
 M.use_run_params = function(params)
     state.params = params
 end
 
+---@return JobParams?
+M.pop_run_params = function()
+    print("popping")
+    local params = state.params
+    state.params = nil
+    return params
+end
+
 ---@param params JobParams?
 ---@return JobParams
 M.get_run_params = function(params)
-    local run_params = state.pop_run_params()
-    params = params or run_params or {}
+    print("get_run " .. vim.inspect(params))
+    print("get_run state " .. vim.inspect(state.params))
+    params = params or state.params or {}
     params.args = params.args or {}
-    return params
+    return vim.deepcopy(params, true)
 end
 
 return M

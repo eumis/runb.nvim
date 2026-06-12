@@ -3,16 +3,16 @@ local view = require "runb.view"
 
 local env = require("runb.environment").get()
 
-view.use_view({
-    tabs = { "api", "python", "bash" },
-    start = view.default.start,
-    append = view.default.append,
-    render = function(result, view_buf, opts)
-        vim.bo[view_buf].filetype = "json"
-        local content = result[opts.tab]
-        view.default.render(content, view_buf, opts)
-    end
-}, true)
+-- view.use_view({
+--     tabs = { "api", "python", "bash" },
+--     start = view.default.start,
+--     append = view.default.append,
+--     render = function(result, view_buf, opts)
+--         vim.bo[view_buf].filetype = "json"
+--         local content = result[opts.tab]
+--         view.default.render(content, view_buf, opts)
+--     end
+-- }, true)
 
 runb.async(function()
     local result = {}

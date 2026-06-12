@@ -90,6 +90,7 @@ end
 ---@param params? JobParams
 ---@return JobParams
 local function get_curl_params(method, args, params)
+    print("curl " .. vim.inspect(params))
     params = generic.get_run_params(params)
     util.append(args, { "-X", method })
     util.append(args, params.args)
@@ -100,7 +101,9 @@ end
 ---@param args table
 ---@param params? JobParams
 function M.get(args, params)
-    M.curl(get_curl_params("GET", args, params))
+    print("get " .. vim.inspect(params))
+    params = get_curl_params("GET", args, params)
+    M.curl(params)
 end
 
 ---@param args table

@@ -1,12 +1,13 @@
-local nview = require "runb.niew"
 local async = require "plenary.async"
+local nview = require "runb.niew"
+local generic = require "runb.generic"
 
 local M = {
     ---@type {[string]: fun(params: JobParams)}
     runs = {
         lua = function(params)
             params.args = {}
-            require("runb.generic").use_run_params(params)
+            generic.use_run_params(params)
             dofile(vim.fn.expand("%"))
         end,
         sh = function(params)
@@ -44,7 +45,8 @@ M.run = function()
 end
 
 M.async = function(fun, callback)
-    async.run(fun, callback)
+    local params = generic.pop_run_params()
+    async.run(fun, function() callback(params) end)
 end
 
 M.await = function(fun, ...)
