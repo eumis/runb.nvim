@@ -114,7 +114,7 @@ M.resolve_params = function(params, callback)
         end
         params.on_result = merged_callback
     end
-    return vim.deepcopy(params, true)
+    return params
 end
 
 return M

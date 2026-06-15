@@ -29,6 +29,7 @@ end
 ---@class Niew
 ---@field source_buf integer
 ---@field view_buf integer
+---@field filetype string
 ---@field render fun(self, result: Result?, opts: NiewRenderOptions?)
 local DefaultView = {}
 M.DefaultView = DefaultView;
@@ -44,6 +45,12 @@ DefaultView.new = function(_, opt)
     M.views[ent.source_buf] = ent;
     M.sources[ent.view_buf] = ent.source_buf;
     return setmetatable(ent, { __index = DefaultView })
+end
+
+---@param self Niew
+---@param filetype string
+DefaultView.set_type = function(self, filetype)
+    vim.bo[self.view_buf].filetype = filetype
 end
 
 ---@param self Niew

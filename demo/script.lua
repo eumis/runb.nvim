@@ -1,5 +1,6 @@
 local runb = require "runb"
 local generic = require "runb.generic"
+local niew = require "runb.niew"
 
 local env = require("runb.environment").get()
 
@@ -16,6 +17,8 @@ local env = require("runb.environment").get()
 
 runb.async(function(params)
     generic.use_params(params)
+    niew.get_view():set_type("json")
+
     local result = {}
 
     local rest_result = runb.await(require "runb.rest".get, {
