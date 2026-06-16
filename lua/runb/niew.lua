@@ -11,19 +11,19 @@ local M = {
     ---@type {win: integer}
     state = {
         win = -1,
-    },
+    }
 }
 
----@param source_buf? integer
+---@param buf? integer
 ---@return integer
-local function get_source_buf(source_buf)
-    if source_buf == nil then
-        return vim.api.nvim_get_current_buf()
+local function get_source_buf(buf)
+    if buf == nil then
+        buf = vim.api.nvim_get_current_buf()
     end
-    if M.sources[source_buf] ~= nil then
-        return M.sources[source_buf]
+    if M.sources[buf] ~= nil then
+        return M.sources[buf]
     end
-    return source_buf
+    return buf
 end
 
 ---@return Niew?
@@ -40,17 +40,19 @@ end
 
 local function buf_leave_callback()
     return
-    vim.schedule(function()
-        if get_current_view() == nil then
-            M.hide_view()
-        end
-    end)
+        vim.schedule(function()
+            if get_current_view() == nil then
+                M.hide_view()
+            end
+        end)
 end
 
 ---@class Niew
 ---@field source_buf integer
 ---@field view_buf integer
 ---@field filetype string
+---@field open_autocmd_id integer?
+---@field close_autocmd_id integer?
 ---@field render fun(self, result: Result?, opts: NiewRenderOptions?)
 local DefaultView = {}
 M.DefaultView = DefaultView;
@@ -67,21 +69,22 @@ DefaultView.new = function(_, opt)
     M.sources[ent.view_buf] = ent.source_buf;
     ent = setmetatable(ent, { __index = DefaultView })
     ent:auto_open()
+
     return ent
 end
 
 local au_group = vim.api.nvim_create_augroup('runb_group', { clear = false })
 ---@param self Niew
 DefaultView.auto_open = function(self)
-    if self.open_autocmd == nil then
-        self.open_autocmd = vim.api.nvim_create_autocmd("BufEnter", {
+    if self.open_autocmd_id == nil then
+        self.open_autocmd_id = vim.api.nvim_create_autocmd("BufEnter", {
             group = au_group,
             buffer = self.source_buf,
             callback = buf_enter_callback
         })
-        self.close_autocmd = vim.api.nvim_create_autocmd("BufLeave", {
+        self.close_autocmd_id = vim.api.nvim_create_autocmd("BufLeave", {
             group = au_group,
-            buffer = source_buf,
+            buffer = self.source_buf,
             callback = buf_leave_callback
         })
     end
