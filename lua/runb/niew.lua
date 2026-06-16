@@ -26,6 +26,27 @@ local function get_source_buf(source_buf)
     return source_buf
 end
 
+---@return Niew?
+local function get_current_view()
+    local source_buf = get_source_buf()
+    return M.views[source_buf]
+end
+
+local function buf_enter_callback(opts)
+    vim.schedule(function()
+        M.open_view(opts.buf)
+    end)
+end
+
+local function buf_leave_callback()
+    return
+    vim.schedule(function()
+        if get_current_view() == nil then
+            M.hide_view()
+        end
+    end)
+end
+
 ---@class Niew
 ---@field source_buf integer
 ---@field view_buf integer
@@ -44,7 +65,26 @@ DefaultView.new = function(_, opt)
     }
     M.views[ent.source_buf] = ent;
     M.sources[ent.view_buf] = ent.source_buf;
-    return setmetatable(ent, { __index = DefaultView })
+    ent = setmetatable(ent, { __index = DefaultView })
+    ent:auto_open()
+    return ent
+end
+
+local au_group = vim.api.nvim_create_augroup('runb_group', { clear = false })
+---@param self Niew
+DefaultView.auto_open = function(self)
+    if self.open_autocmd == nil then
+        self.open_autocmd = vim.api.nvim_create_autocmd("BufEnter", {
+            group = au_group,
+            buffer = self.source_buf,
+            callback = buf_enter_callback
+        })
+        self.close_autocmd = vim.api.nvim_create_autocmd("BufLeave", {
+            group = au_group,
+            buffer = source_buf,
+            callback = buf_leave_callback
+        })
+    end
 end
 
 ---@param self Niew
