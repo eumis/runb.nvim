@@ -107,8 +107,8 @@ function M.curl(args, params, callback)
 end
 
 ---@param args? string | string[]
----@param callback? fun(result: JobResult)
 ---@param params? JobParams
+---@param callback? fun(result: JobResult)
 function M.get(args, params, callback)
     args = get_method_args("GET", args)
     params = generic.resolve_params(params, callback)
