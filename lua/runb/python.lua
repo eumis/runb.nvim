@@ -1,5 +1,6 @@
 local generic = require "runb.generic"
 local util = require "runb.util"
+local niew = require "runb.niew"
 
 ---@class PythonSettings
 ---@field command string
@@ -19,15 +20,15 @@ end
 
 ---@param args? string | string[]
 ---@param params? JobParams
----@param callback? fun(result: JobResult)
+---@param await_callback? fun(result: JobResult)
 ---@return Job
-M.run = function(args, params, callback)
-    args = generic.resolve_args(args)
-    if M.settings.args ~= nil then
-        util.append(args, M.settings.args)
+M.run = function(args, params, await_callback)
+    args = util.resolve_args(args, M.settings.args)
+    params, await_callback = util.resolve_params(params, await_callback)
+    if await_callback == nil then
+        params = niew.with_render(params)
     end
-    params = generic.resolve_params(params, callback)
-    return generic.run(M.settings.command, args, params)
+    return generic.run(M.settings.command, args, params, await_callback)
 end
 
 return M

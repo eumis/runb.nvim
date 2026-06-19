@@ -1,5 +1,6 @@
 local util = require "runb.util"
 local generic = require "runb.generic"
+local niew = require "runb.niew"
 
 ---@class RestSettings
 ---@field command string
@@ -76,79 +77,69 @@ end
 
 ---@param args string[]
 ---@param params JobParams
+---@param await_callback? fun(result: JobResult)
 ---@return Job
-local function run_curl(args, params)
-    if M.settings.args ~= nil then
-        util.append(args, M.settings.args)
-    end
+local function run_curl(args, params, await_callback)
     args = util.flatten(args)
-    if M.settings.args ~= nil then
-        util.append(args, M.settings.args)
+    args = util.resolve_args(args, M.settings.args)
+    if await_callback == nil then
+        params = niew.with_render(params)
     end
-    return generic.run(M.settings.command, args, params)
-end
-
----@param method string
----@param args? string | string[]
----@return JobParams
-local function get_method_args(method, args)
-    args = generic.resolve_args(args)
-    util.append(args, { "-X", method })
-    return args
+    return generic.run(M.settings.command, args, params, await_callback)
 end
 
 ---@param args? string | string[]
 ---@param params? JobParams
----@param callback? fun(result: JobResult)
-function M.curl(args, params, callback)
-    args = generic.resolve_args(args)
-    params = generic.resolve_params(params, callback)
-    run_curl(args, params)
+---@param await_callback? fun(result: JobResult)
+function M.curl(args, params, await_callback)
+    args = util.resolve_args(args)
+    params, await_callback = util.resolve_params(params, await_callback)
+    run_curl(args, params, await_callback)
 end
 
 ---@param args? string | string[]
 ---@param params? JobParams
----@param callback? fun(result: JobResult)
-function M.get(args, params, callback)
-    args = get_method_args("GET", args)
-    params = generic.resolve_params(params, callback)
-    run_curl(args, params)
+---@param await_callback? fun(result: JobResult)
+function M.get(args, params, await_callback)
+    args = util.resolve_args(args, { "-X", "GET" })
+    params, await_callback = util.resolve_params(params, await_callback)
+    run_curl(args, params, await_callback)
 end
 
 ---@param args? string | string[]
----@param callback? fun(result: JobResult)
 ---@param params? JobParams
-function M.post(args, params, callback)
-    args = get_method_args("POST", args)
-    params = generic.resolve_params(params, callback)
-    run_curl(args, params)
+---@param await_callback? fun(result: JobResult)
+function M.post(args, params, await_callback)
+    args = util.resolve_args(args, { "-X", "POST" })
+    params, await_callback = util.resolve_params(params, await_callback)
+    run_curl(args, params, await_callback)
 end
 
 ---@param args? string | string[]
----@param callback? fun(result: JobResult)
 ---@param params? JobParams
-function M.put(args, params, callback)
-    args = get_method_args("PUT", args)
-    params = generic.resolve_params(params, callback)
-    run_curl(args, params)
+---@param await_callback? fun(result: JobResult)
+function M.put(args, params, await_callback)
+    args = util.resolve_args(args, { "-X", "PUT" })
+    params, await_callback = util.resolve_params(params, await_callback)
+    run_curl(args, params, await_callback)
 end
 
 ---@param args? string | string[]
----@param callback? fun(result: JobResult)
 ---@param params? JobParams
-function M.delete(args, params, callback)
-    args = get_method_args("DELETE", args)
-    params = generic.resolve_params(params, callback)
-    run_curl(args, params)
+---@param await_callback? fun(result: JobResult)
+function M.delete(args, params, await_callback)
+    args = util.resolve_args(args, { "-X", "DELETE" })
+    params, await_callback = util.resolve_params(params, await_callback)
+    run_curl(args, params, await_callback)
 end
 
 ---@param args? string | string[]
----@param callback? fun(result: JobResult)
 ---@param params? JobParams
-function M.patch(args, params, callback)
-    args = get_method_args("PATCH", args)
-    params = generic.resolve_params(params, callback)
-    run_curl(args, params)
+---@param await_callback? fun(result: JobResult)
+function M.patch(args, params, await_callback)
+    args = util.resolve_args(args, { "-X", "PATCH" })
+    params, await_callback = util.resolve_params(params, await_callback)
+    run_curl(args, params, await_callback)
 end
 
 return M

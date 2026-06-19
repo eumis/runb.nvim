@@ -12,15 +12,16 @@ local environment = require "runb.environment"
 ---@field env? table
 ---@field on_start? fun(result: JobResult)
 ---@field on_output? fun(output: string, result: JobResult)
----@field on_result? fun(result: JobResult)
+---@field on_result? fun(result: JobResult):JobResult?
 
 local M = {}
 
 ---@param command string
 ---@param args string[]
 ---@param params JobParams
+---@param await_callback? fun(result: JobResult)
 ---@return Job
-M.run = function(command, args, params)
+M.run = function(command, args, params, await_callback)
     ---@type JobResult
     local result = {
         cmd_code = -1,
@@ -48,7 +49,10 @@ M.run = function(command, args, params)
         result.cmd_code = exit_code
         vim.schedule(function()
             if params.on_result ~= nil then
-                params.on_result(result)
+                result = params.on_result(result) or result
+            end
+            if await_callback ~= nil then
+                await_callback(result)
             end
         end)
     end
@@ -65,56 +69,6 @@ M.run = function(command, args, params)
     job:start()
 
     return job
-end
-
----@param args? string | string[]
----@return string[]
-M.resolve_args = function(args)
-    args = args or {}
-    if type(args) ~= "table" then
-        args = { args }
-    end
-    return args
-end
-
-local state = {
-    ---@type JobParams?
-    params = nil
-}
-
----@param params? JobParams
-M.use_params = function(params)
-    state.params = params
-end
-
----@return JobParams?
-M.pop_params = function()
-    local params = state.params
-    state.params = nil
-    return params
-end
-
----@param params? JobParams
----@param callback? fun(result: JobResult)
----@return JobParams
-M.resolve_params = function(params, callback)
-    if callback == nil and type(params) == "function" then
-        callback = params
-        params = nil
-    end
-    params = vim.deepcopy(params or state.params or {}, true)
-    if callback ~= nil then
-        local merged_callback = callback
-        local on_result = params.on_result
-        if on_result ~= nil then
-            merged_callback = function(result)
-                on_result(result)
-                callback(result)
-            end
-        end
-        params.on_result = merged_callback
-    end
-    return params
 end
 
 return M

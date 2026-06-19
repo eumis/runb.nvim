@@ -210,4 +210,25 @@ M.get_full_output = function(result)
     return content
 end
 
+---@param params? JobParams
+---@return JobParams
+M.with_render = function(params)
+    params = params or {}
+    M.open_view()
+    local callback = function(result)
+        M.get_view():render_result(result, { start_line = 0 })
+        return result
+    end
+    local on_result = params.on_result
+    if on_result ~= nil then
+        callback = function(result)
+            result = on_result(result) or result
+            M.get_view():render_result(result, { start_line = 0 })
+            return result
+        end
+    end
+    params.on_result = callback
+    return params
+end
+
 return M

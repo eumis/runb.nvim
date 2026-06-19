@@ -15,9 +15,10 @@ local env = require("runb.environment").get()
 --     end
 -- }, true)
 
-runb.async(function(params)
-    generic.use_params(params)
-    niew.get_view():set_type("json")
+runb.async(function()
+    local view = niew.get_view()
+    view:set_type("json")
+    niew.open_view()
 
     local result = {}
 
@@ -39,4 +40,6 @@ runb.async(function(params)
     local bash_result = runb.await(require "runb.bash".run, vim.fn.expand("test.sh"))
     result.bash = bash_result.output
     print(bash_result.output)
+
+    niew.get_view():render_result(bash_result)
 end)

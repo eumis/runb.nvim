@@ -1,6 +1,4 @@
 local async = require "plenary.async"
-local nview = require "runb.niew"
-local generic = require "runb.generic"
 
 local M = {
     ---@type {[string]: fun()}
@@ -23,31 +21,12 @@ local M = {
 M.run = function()
     local run_fn = M.runs[vim.bo.filetype]
     if run_fn ~= nil then
-        local view = nview.open_view()
-        generic.use_params {
-            -- on_start = function(result)
-            --     view:render_start(result, { start_line = -1 })
-            -- end,
-            -- on_output = function(output, result)
-            --     view:render_progress(output, result, { start_line = -1 })
-            -- end,
-            on_result = function(result)
-                -- view:render_start(result)
-                view:render_result(result, { start_line = -1 })
-            end
-        }
         run_fn()
     end
 end
 
 M.async = function(fun, callback)
-    async.run(function()
-        local params = generic.pop_params()
-        fun(params)
-    end, function()
-        generic.pop_params()
-        if callback ~= nil then callback() end
-    end)
+    async.run(fun, callback)
 end
 
 M.await = function(fun, ...)

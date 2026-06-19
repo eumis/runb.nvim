@@ -89,4 +89,29 @@ M.bool = function(value, default)
     return value
 end
 
+---@param args? string | string[]
+---@param common_args? string[]
+---@return string[]
+M.resolve_args = function(args, common_args)
+    args = args or {}
+    if type(args) ~= "table" then
+        args = { args }
+    end
+    if common_args ~= nil then
+        M.append(args, common_args)
+    end
+    return args
+end
+
+---@param params? JobParams
+---@param await_callback? fun(result: JobResult)
+---@return JobParams, fun(result: JobResult)?
+M.resolve_params = function(params, await_callback)
+    if await_callback == nil and type(params) == "function" then
+        await_callback = params
+        params = nil
+    end
+    return params or {}, await_callback
+end
+
 return M
