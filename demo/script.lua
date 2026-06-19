@@ -30,16 +30,14 @@ runb.async(function()
     local info = vim.json.decode(info_json)
     env.html_url = info.html_url
     result.api = rest_result.output
-    print(rest_result.output)
+    view:render_result(rest_result, { start_line = 0 })
 
     local py_result = runb.await(require "runb.python".run, vim.fn.expand("test.py"))
     result.python = py_result.output
     env.python_output = py_result.output[2]
-    print(py_result.output)
+    view:render_result(py_result, { start_line = -1 })
 
     local bash_result = runb.await(require "runb.bash".run, vim.fn.expand("test.sh"))
     result.bash = bash_result.output
-    print(bash_result.output)
-
-    niew.get_view():render_result(bash_result)
+    view:render_result(bash_result, { start_line = -1 })
 end)
