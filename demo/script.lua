@@ -1,5 +1,4 @@
 local runb = require "runb"
-local generic = require "runb.generic"
 local niew = require "runb.niew"
 
 local env = require("runb.environment").get()

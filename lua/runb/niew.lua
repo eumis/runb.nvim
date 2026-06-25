@@ -57,9 +57,9 @@ end
 local DefaultView = {}
 M.DefaultView = DefaultView;
 
----@param opt? {source_buf: integer?}
+---@param opt? {source_buf: integer?, auto_open: boolean?}
 ---@return Niew
-DefaultView.new = function(_, opt)
+DefaultView.new = function(self, opt)
     opt = opt or {}
     local ent = {
         source_buf = get_source_buf(opt.source_buf),
@@ -67,9 +67,10 @@ DefaultView.new = function(_, opt)
     }
     M.views[ent.source_buf] = ent;
     M.sources[ent.view_buf] = ent.source_buf;
-    ent = setmetatable(ent, { __index = DefaultView })
-    ent:auto_open()
-
+    ent = setmetatable(ent, { __index = self })
+    if opt.auto_open == true then
+        ent:auto_open()
+    end
     return ent
 end
 
@@ -158,7 +159,7 @@ M.get_view = function(source_buf, create)
     create = create == nil or create;
     local view = M.views[source_buf]
     if view == nil and create then
-        view = M.DefaultView:new({ source_buf = source_buf });
+        view = M.DefaultView:new({ source_buf = source_buf, auto_open = true });
     end
     return view
 end
