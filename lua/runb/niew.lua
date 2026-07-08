@@ -2,6 +2,7 @@ local util = require "runb.util"
 
 ---@class NiewRenderOptions
 ---@field start_line? integer
+---@field end_line? integer
 
 local M = {
     ---@type {[integer]: Niew}
@@ -50,6 +51,7 @@ end
 ---@class Niew
 ---@field source_buf integer
 ---@field view_buf integer
+---@field auto_render boolean
 ---@field filetype string
 ---@field open_autocmd_id integer?
 ---@field close_autocmd_id integer?
@@ -57,13 +59,14 @@ end
 local DefaultView = {}
 M.DefaultView = DefaultView;
 
----@param opt? {source_buf: integer?, auto_open: boolean?}
+---@param opt? {source_buf: integer?, auto_open: boolean?, auto_render: boolean?}
 ---@return Niew
 DefaultView.new = function(self, opt)
     opt = opt or {}
     local ent = {
         source_buf = get_source_buf(opt.source_buf),
-        view_buf = vim.api.nvim_create_buf(false, true)
+        view_buf = vim.api.nvim_create_buf(false, true),
+        auto_render = opt.auto_render == nil or opt.auto_render == true
     }
     M.views[ent.source_buf] = ent;
     M.sources[ent.view_buf] = ent.source_buf;
@@ -115,40 +118,8 @@ DefaultView.render = function(self, result, opts)
     end
 
     local start_line = opts.start_line ~= nil and opts.start_line or 0;
-    vim.api.nvim_buf_set_lines(self.view_buf, start_line, -1, false, content)
-end
-
----@param self Niew
----@param result JobResult
----@param opts? NiewRenderOptions
-DefaultView.render_start = function(self, result, opts)
-    local content = { result.command }
-    if result.args ~= nil then
-        content[1] = content[1] .. " " .. table.concat(result.args, " ")
-    end
-    table.insert(content, "")
-    table.insert(content, "Running...")
-    self:render(content, opts)
-end
-
----@param self Niew
----@param data string
----@param result JobResult
----@param opts? NiewRenderOptions
-DefaultView.render_progress = function(self, data, result, opts)
-    opts = opts or {
-        start_line = -2
-    }
-    self:render({ data, "", "Running..." }, opts)
-end
-
----@param self Niew
----@param result JobResult
----@param opts? NiewRenderOptions
-DefaultView.render_result = function(self, result, opts)
-    opts = opts or {}
-    opts.start_line = opts.start_line == nil and 0 or opts.start_line
-    self:render(result.output, opts)
+    local end_line = opts.end_line ~= nil and opts.end_line or -1;
+    vim.api.nvim_buf_set_lines(self.view_buf, start_line, end_line, false, content)
 end
 
 ---@param source_buf? integer
@@ -213,18 +184,23 @@ end
 
 ---@param params? JobParams
 ---@return JobParams
-M.with_render = function(params)
+M.with_auto_render = function(params)
     params = params or {}
+    local view = M.get_view()
+    if not view.auto_render then
+        print("no auto render")
+        return params
+    end
     M.open_view()
     local callback = function(result)
-        M.get_view():render_result(result, { start_line = 0 })
+        view:render(result, { start_line = 0 })
         return result
     end
     local on_result = params.on_result
     if on_result ~= nil then
         callback = function(result)
             result = on_result(result) or result
-            M.get_view():render_result(result, { start_line = 0 })
+            view:render(result, { start_line = 0 })
             return result
         end
     end

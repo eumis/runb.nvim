@@ -82,9 +82,7 @@ end
 local function run_curl(args, params, await_callback)
     args = util.flatten(args)
     args = util.resolve_args(args, M.settings.args)
-    if await_callback == nil then
-        params = niew.with_render(params)
-    end
+    params = niew.with_auto_render(params)
     return generic.run(M.settings.command, args, params, await_callback)
 end
 

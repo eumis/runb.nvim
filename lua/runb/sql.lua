@@ -25,9 +25,7 @@ end
 function M.run(args, params, await_callback)
     args = util.resolve_args(args, M.settings.args)
     params, await_callback = util.resolve_params(params, await_callback)
-    if await_callback == nil then
-        params = niew.with_render(params)
-    end
+    params = niew.with_auto_render(params)
     return generic.run(M.settings.command, args, params, await_callback)
 end
 
