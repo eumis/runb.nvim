@@ -103,7 +103,7 @@ M.resolve_args = function(args, common_args)
     return args
 end
 
----@param params? JobParams
+---@param params? JobParams | fun(result: JobResult)
 ---@param await_callback? fun(result: JobResult)
 ---@return JobParams, fun(result: JobResult)?
 M.resolve_params = function(params, await_callback)

@@ -19,7 +19,7 @@ M.setup = function(settings)
 end
 
 ---@param args? string | string[]
----@param params? JobParams
+---@param params? JobParams | fun(result: JobResult)
 ---@param await_callback? fun(result: JobResult)
 ---@return Job
 function M.run(args, params, await_callback)

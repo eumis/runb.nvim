@@ -87,7 +87,7 @@ local function run_curl(args, params, await_callback)
 end
 
 ---@param args? string | string[]
----@param params? JobParams
+---@param params? JobParams | fun(result: JobResult)
 ---@param await_callback? fun(result: JobResult)
 function M.curl(args, params, await_callback)
     args = util.resolve_args(args)
@@ -96,7 +96,7 @@ function M.curl(args, params, await_callback)
 end
 
 ---@param args? string | string[]
----@param params? JobParams
+---@param params? JobParams | fun(result: JobResult)
 ---@param await_callback? fun(result: JobResult)
 function M.get(args, params, await_callback)
     args = util.resolve_args(args, { "-X", "GET" })
@@ -105,7 +105,7 @@ function M.get(args, params, await_callback)
 end
 
 ---@param args? string | string[]
----@param params? JobParams
+---@param params? JobParams | fun(result: JobResult)
 ---@param await_callback? fun(result: JobResult)
 function M.post(args, params, await_callback)
     args = util.resolve_args(args, { "-X", "POST" })
@@ -114,7 +114,7 @@ function M.post(args, params, await_callback)
 end
 
 ---@param args? string | string[]
----@param params? JobParams
+---@param params? JobParams | fun(result: JobResult)
 ---@param await_callback? fun(result: JobResult)
 function M.put(args, params, await_callback)
     args = util.resolve_args(args, { "-X", "PUT" })
@@ -123,7 +123,7 @@ function M.put(args, params, await_callback)
 end
 
 ---@param args? string | string[]
----@param params? JobParams
+---@param params? JobParams | fun(result: JobResult)
 ---@param await_callback? fun(result: JobResult)
 function M.delete(args, params, await_callback)
     args = util.resolve_args(args, { "-X", "DELETE" })
@@ -132,7 +132,7 @@ function M.delete(args, params, await_callback)
 end
 
 ---@param args? string | string[]
----@param params? JobParams
+---@param params? JobParams | fun(result: JobResult)
 ---@param await_callback? fun(result: JobResult)
 function M.patch(args, params, await_callback)
     args = util.resolve_args(args, { "-X", "PATCH" })

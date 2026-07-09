@@ -165,3 +165,49 @@ describe("util.bool", function()
         end)
     end
 end)
+
+describe("util.resolve_args", function()
+    local cases = {
+        { args = nil,           common = nil,             expected = {} },
+        { args = "x",           common = nil,             expected = { "x" } },
+        { args = { "a" },       common = nil,             expected = { "a" } },
+        { args = "a",           common = { "b" },         expected = { "a", "b" } },
+        { args = { "a" },       common = { "b", "c" },    expected = { "a", "b", "c" } },
+        { args = nil,           common = { "b" },         expected = { "b" } },
+    }
+    for i, case in pairs(cases) do
+        it("should resolve args " .. i, function()
+            local actual = util.resolve_args(case.args, case.common)
+
+            assert.are.same(case.expected, actual)
+        end)
+    end
+end)
+
+describe("util.resolve_params", function()
+    it("should default params to an empty table", function()
+        local params, callback = util.resolve_params(nil, nil)
+
+        assert.are.same({}, params)
+        assert.is.Nil(callback)
+    end)
+
+    it("should keep params and callback when both are given", function()
+        local input_params = { on_start = function() end }
+        local input_callback = function() end
+
+        local params, callback = util.resolve_params(input_params, input_callback)
+
+        assert.are.same(input_params, params)
+        assert.are.equal(input_callback, callback)
+    end)
+
+    it("should move a callback passed as params into await_callback", function()
+        local input_callback = function() end
+
+        local params, callback = util.resolve_params(input_callback, nil)
+
+        assert.are.same({}, params)
+        assert.are.equal(input_callback, callback)
+    end)
+end)
