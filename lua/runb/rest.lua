@@ -1,6 +1,6 @@
 local util = require "runb.util"
 local generic = require "runb.generic"
-local niew = require "runb.niew"
+local niew = require "runb.view"
 
 ---@class RestSettings
 ---@field command string

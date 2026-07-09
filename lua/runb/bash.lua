@@ -1,6 +1,6 @@
 local generic = require "runb.generic"
 local util = require "runb.util"
-local niew = require "runb.niew"
+local niew = require "runb.view"
 
 ---@class BashSettings
 ---@field command string

@@ -1,5 +1,5 @@
 local runb = require "runb"
-local niew = require "runb.niew"
+local niew = require "runb.view"
 
 local env = require("runb.environment").get()
 
