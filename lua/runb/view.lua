@@ -1,5 +1,7 @@
 local util = require "runb.util"
 
+---@alias Result string | table
+
 ---@class ViewRenderOptions
 ---@field start_line? integer
 ---@field end_line? integer
